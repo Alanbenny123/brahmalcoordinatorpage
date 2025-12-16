@@ -1,0 +1,206 @@
+.glitch-title {
+  font-size: clamp(4rem, 14vw, 14rem);
+  font-weight: 900;
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  margin: var(--spacing-lg) 0;
+  perspective: 1000px;
+  transform-style: preserve-3d;
+  animation: titleBreathe 4s ease-in-out infinite;
+}
+
+@keyframes titleBreathe {
+  0%, 100% { transform: scale(1) rotateX(0deg); }
+  50% { transform: scale(1.02) rotateX(2deg); }
+}
+
+.title-line {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.word-wrapper {
+  overflow: visible;
+  display: inline-block;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.76, 0, 0.24, 1);
+  animation: wordFloat 3s ease-in-out infinite;
+}
+
+.word-wrapper:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.word-wrapper:nth-child(2) {
+  animation-delay: 0.5s;
+}
+
+@keyframes wordFloat {
+  0%, 100% { transform: translateY(0px) rotateY(0deg); }
+  50% { transform: translateY(-8px) rotateY(3deg); }
+}
+
+.word {
+  display: inline-block;
+  position: relative;
+  white-space: nowrap;
+  color: #f0f0f0;
+  text-shadow: 
+    0 2px 8px rgba(16, 185, 129, 0.2),
+    0 4px 12px rgba(0, 0, 0, 0.6),
+    0 8px 24px rgba(0, 0, 0, 0.4);
+  transform-style: preserve-3d;
+  transition: all 0.4s cubic-bezier(0.76, 0, 0.24, 1);
+}
+
+/* 3D Depth Effect */
+.word::after {
+  content: attr(data-word);
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  z-index: -1;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.3) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: blur(4px);
+}
+
+/* Enhanced Gradient for highlight - Brahma Theme */
+.word-wrapper.highlight .word {
+  background: linear-gradient(135deg, 
+    #10b981 0%,
+    #14b8a6 25%,
+    #06b6d4 50%,
+    #10b981 75%,
+    #14b8a6 100%);
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  position: relative;
+  animation: brahmaShift 5s ease-in-out infinite;
+  filter: drop-shadow(0 2px 8px rgba(16, 185, 129, 0.3)) 
+          drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
+}
+
+@keyframes brahmaShift {
+  0% { background-position: 0% 50%; }
+  33% { background-position: 50% 50%; }
+  66% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Animated Gradient */
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* Glow Effect - Brahma */
+.word-wrapper.highlight .word::before {
+  content: attr(data-word);
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -2;
+  background: linear-gradient(135deg, 
+    rgba(16, 185, 129, 0.4) 0%, 
+    rgba(6, 182, 212, 0.4) 50%,
+    rgba(16, 185, 129, 0.4) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: blur(30px);
+  opacity: 0;
+  animation: brahmaGlowPulse 3s ease-in-out infinite;
+}
+
+@keyframes brahmaGlowPulse {
+  0%, 100% { 
+    opacity: 0.15;
+    transform: scale(1);
+    filter: blur(30px);
+  }
+  50% { 
+    opacity: 0.25;
+    transform: scale(1.03);
+    filter: blur(35px);
+  }
+}
+
+@keyframes glowPulse {
+  0%, 100% { 
+    opacity: 0;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.6;
+    transform: scale(1.02);
+  }
+}
+
+/* Hover Effects */
+.glitch-title:hover .word-wrapper {
+  transform: translateZ(20px);
+}
+
+.glitch-title:hover .word {
+  text-shadow: 
+    0 15px 60px rgba(0, 0, 0, 0.9),
+    0 0 120px rgba(255, 255, 255, 0.2),
+    5px 5px 0 rgba(0, 0, 0, 0.3);
+}
+
+.word-wrapper.highlight:hover {
+  animation: float 2s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) translateZ(20px); }
+  50% { transform: translateY(-10px) translateZ(30px); }
+}
+
+/* Individual word hover */
+.word-wrapper:hover .word {
+  transform: scale(1.05) translateZ(10px);
+}
+
+/* Shimmer effect on hover */
+.word-wrapper.highlight:hover .word {
+  animation: gradientShift 1s ease-in-out infinite, shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% { filter: brightness(1); }
+  50% { filter: brightness(1.2); }
+  100% { filter: brightness(1); }
+}
+
+@media (max-width: 768px) {
+  .glitch-title {
+    font-size: clamp(3rem, 12vw, 8rem);
+    margin: var(--spacing-md) 0;
+  }
+
+  .title-line {
+    gap: 1rem;
+  }
+
+  /* Reduce 3D effects on mobile */
+  .word::after {
+    top: 2px;
+    left: 2px;
+  }
+
+  .glitch-title:hover .word-wrapper {
+    transform: translateZ(10px);
+  }
+}

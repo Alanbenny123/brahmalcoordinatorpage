@@ -1,0 +1,82 @@
+.page-transition {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--primary-bg);
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.section {
+  padding: var(--spacing-2xl) 0;
+  position: relative;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-lg);
+}
+
+.section-title {
+  font-size: clamp(2.5rem, 7vw, 6rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  margin-bottom: var(--spacing-xl);
+  overflow: hidden;
+  line-height: 1.1;
+}
+
+@media (max-width: 1024px) {
+  .container {
+    padding: 0 var(--spacing-md);
+  }
+
+  .section {
+    padding: var(--spacing-xl) 0;
+  }
+
+  .section-title {
+    font-size: clamp(2rem, 6vw, 5rem);
+    margin-bottom: var(--spacing-lg);
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 0 var(--spacing-sm);
+  }
+
+  .section {
+    padding: var(--spacing-lg) 0;
+  }
+
+.section-title {
+  font-size: clamp(1.75rem, 8vw, 4rem);
+  margin-bottom: var(--spacing-md);
+}
+}
+
+/* Custom Scrollbar - Masculine Theme */
+body::-webkit-scrollbar {
+  width: 12px;
+}
+
+body::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+body::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, 
+    rgba(16, 185, 129, 0.5) 0%, 
+    rgba(6, 182, 212, 0.5) 100%);
+  border-radius: 10px;
+}
+
+body::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, 
+    rgba(16, 185, 129, 0.7) 0%, 
+    rgba(6, 182, 212, 0.7) 100%);
+}
