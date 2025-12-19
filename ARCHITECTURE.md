@@ -127,23 +127,57 @@ graph TB
 }
 ```
 
-#### 3. **tickets**
-```json
+### Database Collections
+
+#### Tickets Collection
+```javascript
 {
-  "ticketId": "string (unique)",
-  "qrCode": "string (unique hash)",
-  "qrCodeImageUrl": "string (Firebase URL)",
-  "userId": "string",
-  "eventId": "string",
-  "teamId": "string | null",
-  "ticketType": "individual | group",
-  "status": "valid | used | invalid",
-  "issuedAt": "datetime",
-  "scannedAt": "datetime | null",
-  "scannedBy": "string (coordinatorId) | null"
+  T_id: string (primary key, ticket ID),
+  S_name: string (student name),
+  E_name: string (event name),
+  Time: timestamp (registration/generation time),
+  Usage: boolean (true = already used, false = available)
 }
 ```
 
+**Validation Logic:**
+- When QR is scanned, check if ticket exists
+- If `Usage === true` → Ticket already used
+- If ticket not found in current event → "Not in the present event"
+- If `Usage === false` → Valid ticket, mark as used and allow entry
+
+#### Events Collection
+```javascript
+{
+  E_id: string (primary key, event ID),
+  E_name: string (event name),
+  E_pass: string (coordinator password/access code)
+}
+```
+
+**Purpose:**
+- Serves as coordinator authentication
+- Coordinators login using `E_id` and `E_pass`
+- Holds only particular event data based on credentials
+- Each event has unique access credentials
+
+#### Student_Participants Collection
+```javascript
+{
+  studentId: string (primary key),
+  S_name: string (student name),
+  email: string,
+  phone: string,
+  department: string,
+  year: number,
+  registeredEvents: array<string> (event IDs)
+}
+```
+
+**Purpose:**
+- Referenced when QR check returns false
+- Stores student details for all participants
+- Links students to their registered events
 #### 4. **attendance**
 ```json
 {
@@ -157,22 +191,6 @@ graph TB
   "certificateGenerated": "boolean",
   "certificateUrl": "string (Firebase URL) | null",
   "certificateGeneratedAt": "datetime | null"
-}
-```
-
-#### 5. **users**
-```json
-{
-  "userId": "string (unique)",
-  "name": "string",
-  "email": "string",
-  "phone": "string",
-  "rollNumber": "string",
-  "department": "string",
-  "year": "number",
-  "profilePicUrl": "string (Firebase URL) | null",
-  "registeredEvents": ["eventId1", "eventId2"],
-  "createdAt": "datetime"
 }
 ```
 
@@ -201,28 +219,47 @@ graph TB
 
 ```mermaid
 flowchart TD
-    Start[Coordinator Scans QR Code] --> Decode[Decode QR Data]
-    Decode --> Validate{Validate Ticket}
+    Start[Coordinator Scans QR Code] --> Decode[Decode QR Data: T_id]
+    Decode --> CheckTicket{Check Ticket in<br/>Tickets Collection}
     
-    Validate -->|Invalid| Error[Show Error: Invalid Ticket]
-    Validate -->|Valid| CheckType{Check Event Type}
+    CheckTicket -->|Not Found| NotInEvent[Error: Not in Present Event]
+    CheckTicket -->|Found| CheckUsage{Check Usage Field}
     
-    CheckType -->|Individual| ShowUser[Display Student Name]
-    ShowUser --> MarkIndividual[Auto-Mark Attendance]
-    MarkIndividual --> SaveIndividual[Save to Attendance DB]
-    SaveIndividual --> SuccessIndividual[Show Success Message]
+    CheckUsage -->|Usage = true| AlreadyUsed[Error: Ticket Already Used]
+    CheckUsage -->|Usage = false| ValidTicket[Valid Ticket ✓]
     
-    CheckType -->|Group| FetchTeam[Fetch Team Members]
-    FetchTeam --> ShowCheckbox[Display Checkbox List]
-    ShowCheckbox --> CoordinatorSelect[Coordinator Selects Members]
-    CoordinatorSelect --> MarkGroup[Mark Selected Attendance]
-    MarkGroup --> SaveGroup[Save to Attendance DB]
-    SaveGroup --> SuccessGroup[Show Success Message]
+    ValidTicket --> FetchStudent[Fetch Student Details<br/>from Student_Participants]
+    FetchStudent --> DisplayInfo[Display: S_name, Event Details]
+    DisplayInfo --> MarkAttendance[Mark Attendance]
+    MarkAttendance --> UpdateUsage[Update Usage = true]
+    UpdateUsage --> Success[Success: Entry Granted]
     
-    Error --> End[End]
-    SuccessIndividual --> End
-    SuccessGroup --> End
+    NotInEvent --> End[End]
+    AlreadyUsed --> End
+    Success --> End
+    
+    style ValidTicket fill:#90EE90
+    style AlreadyUsed fill:#FFB6C1
+    style NotInEvent fill:#FFB6C1
+    style Success fill:#90EE90
 ```
+
+### QR Validation Logic
+
+Based on the whiteboard design, the validation follows this sequence:
+
+1. **Scan QR Code** → Extract `T_id`
+2. **Query Tickets Collection** using `T_id`
+3. **Check Existence**:
+   - If ticket not found → **"Not in the present event"**
+   - If ticket found → Proceed to step 4
+4. **Check Usage Field**:
+   - If `Usage === true` → **"Ticket already used"**
+   - If `Usage === false` → Valid ticket, proceed
+5. **Fetch Student Details** from `Student_Participants` using `S_name`
+6. **Display Information** and confirm entry
+7. **Mark Attendance** and **Update `Usage = true`**
+
 
 ---
 
@@ -317,18 +354,29 @@ brahma-coordinator/
 ## API Endpoints
 
 ### Authentication
-- `POST /api/auth/login` - Coordinator login
+- `POST /api/auth/login` - Coordinator login using `E_id` and `E_pass`
+  ```json
+  Request: { "E_id": "string", "E_pass": "string" }
+  Response: { "token": "jwt", "eventDetails": {...} }
+  ```
 - `POST /api/auth/logout` - Coordinator logout
 - `GET /api/auth/verify` - Verify JWT token
 
 ### Events
-- `GET /api/events/assigned/:coordinatorId` - Get assigned events
-- `GET /api/events/:eventId` - Get event details
+- `GET /api/events/:E_id` - Get event details by E_id
+- `GET /api/events/:E_id/tickets` - Get all tickets for an event
 
 ### Tickets
-- `POST /api/tickets/validate` - Validate QR code
-- `GET /api/tickets/:ticketId` - Get ticket details
-- `GET /api/tickets/team/:teamId` - Get team members for group events
+- `POST /api/tickets/validate` - Validate QR code using T_id
+  ```json
+  Request: { "T_id": "string", "E_id": "string" }
+  Response: 
+    Success: { "valid": true, "S_name": "string", "E_name": "string", "Usage": false }
+    Already Used: { "valid": false, "error": "Ticket already used" }
+    Not Found: { "valid": false, "error": "Not in the present event" }
+  ```
+- `GET /api/tickets/:T_id` - Get ticket details
+- `PUT /api/tickets/:T_id/mark-used` - Mark ticket as used (Usage = true)
 
 ### Attendance
 - `POST /api/attendance/mark` - Mark attendance (individual)
