@@ -69,3 +69,4 @@ For your app to work, the API key needs:
 4. Update `.env` if you created a new key
 5. Restart server
 
+

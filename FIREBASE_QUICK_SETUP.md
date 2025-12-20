@@ -224,3 +224,4 @@ Expected output:
 - ✅ Appwrite handles database
 - ✅ Firebase handles file storage
 
+

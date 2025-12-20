@@ -2,14 +2,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const path = require("path");
-const {
-  getEventByEventId,
-  getTicketByIds,
-  countTicketsByEventId,
-  getTicketsByEventId,
-  getAttendedTickets,
-  markTicketAsUsed
-} = require("./appwrite");
+const db = require("./firebase");
 
 const app = express();
 
@@ -41,35 +34,41 @@ app.post("/login", async (req, res) => {
       });
     }
 
-    // Query events collection using Appwrite
-    const event = await getEventByEventId(event_id);
+    // Query events collection using event_id field
+    const snapshot = await db
+      .collection("events")
+      .where("event_id", "==", event_id)
+      .get();
 
-    if (!event) {
+    if (snapshot.empty) {
       return res.json({
         success: false,
         message: "Event not found"
       });
     }
 
-    if (event.event_pass !== event_pass) {
+    const eventDoc = snapshot.docs[0];
+    const eventData = eventDoc.data();
+
+    if (eventData.event_pass !== event_pass) {
       return res.json({
         success: false,
         message: "Wrong password"
       });
     }
 
+    // ✅ UPDATED RESPONSE (event_id + event_name)
     res.json({
       success: true,
-      event_id: event.event_id,
-      event_name: event.event_name
+      event_id: event_id,
+      event_name: eventData.event_name
     });
 
   } catch (error) {
     console.error("LOGIN ERROR:", error);
-    const errorMessage = error.message || "Server error";
     res.status(500).json({
       success: false,
-      message: process.env.NODE_ENV === 'development' ? errorMessage : "Server error"
+      message: "Server error"
     });
   }
 });
@@ -81,16 +80,16 @@ app.get("/count/:event_id", async (req, res) => {
   try {
     const { event_id } = req.params;
 
-    const count = await countTicketsByEventId(event_id);
+    const snapshot = await db
+      .collection("tickets")
+      .where("event_id", "==", event_id)
+      .get();
 
-    res.json({ count });
+    res.json({ count: snapshot.size });
 
   } catch (error) {
     console.error("COUNT ERROR:", error);
-    const errorMessage = error.message || "Server error";
-    res.status(500).json({ 
-      message: process.env.NODE_ENV === 'development' ? errorMessage : "Server error" 
-    });
+    res.status(500).json({ message: "Server error" });
   }
 });
 
@@ -108,15 +107,22 @@ app.post("/scan", async (req, res) => {
       });
     }
 
-    // Query tickets collection using Appwrite
-    const ticket = await getTicketByIds(ticket_id, event_id);
+    // Match ticket_id + event_id fields
+    const snapshot = await db
+      .collection("tickets")
+      .where("ticket_id", "==", ticket_id)
+      .where("event_id", "==", event_id)
+      .get();
 
-    if (!ticket) {
+    if (snapshot.empty) {
       return res.json({
         success: false,
         message: "Ticket does not belong to this event or does not exist"
       });
     }
+
+    const ticketDoc = snapshot.docs[0];
+    const ticket = ticketDoc.data();
 
     if (ticket.usage === true) {
       return res.json({
@@ -125,8 +131,7 @@ app.post("/scan", async (req, res) => {
       });
     }
 
-    // Mark ticket as used
-    await markTicketAsUsed(ticket.$id);
+    await ticketDoc.ref.update({ usage: true });
 
     res.json({
       success: true,
@@ -136,10 +141,9 @@ app.post("/scan", async (req, res) => {
 
   } catch (error) {
     console.error("SCAN ERROR:", error);
-    const errorMessage = error.message || "Server error";
     res.status(500).json({
       success: false,
-      message: process.env.NODE_ENV === 'development' ? errorMessage : "Server error"
+      message: "Server error"
     });
   }
 });
@@ -151,38 +155,45 @@ app.get("/attendance/:event_id", async (req, res) => {
   try {
     const { event_id } = req.params;
 
-    const tickets = await getAttendedTickets(event_id);
+    const snapshot = await db
+      .collection("tickets")
+      .where("event_id", "==", event_id)
+      .where("usage", "==", true)
+      .get();
 
     let students = [];
-    tickets.forEach(ticket => {
-      students.push(ticket.student_name);
+    snapshot.forEach(doc => {
+      students.push(doc.data().student_name);
     });
 
     res.json(students);
 
   } catch (error) {
     console.error("ATTENDANCE ERROR:", error);
-    const errorMessage = error.message || "Server error";
     res.status(500).json({
-      message: process.env.NODE_ENV === 'development' ? errorMessage : "Server error"
+      message: "Server error"
     });
   }
 });
 
-/*
-Dashboard additional stuffs 
- */
-
+/* ===========================
+   DASHBOARD ALL TICKETS
+   =========================== */
 app.get("/tickets/:event_id", async (req, res) => {
   try {
-    const tickets = await getTicketsByEventId(req.params.event_id);
+    const snapshot = await db
+      .collection("tickets")
+      .where("event_id", "==", req.params.event_id)
+      .get();
+
+    let tickets = [];
+    snapshot.forEach(doc => tickets.push(doc.data()));
+
     res.json(tickets);
+
   } catch (error) {
     console.error("TICKETS ERROR:", error);
-    const errorMessage = error.message || "Server error";
-    res.status(500).json({
-      message: process.env.NODE_ENV === 'development' ? errorMessage : "Server error"
-    });
+    res.status(500).json({ message: "Server error" });
   }
 });
 

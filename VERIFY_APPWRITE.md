@@ -144,3 +144,4 @@ npm start
 3. **Check server console** for detailed error messages
 4. **Run diagnostic**: `node test-appwrite.js`
 
+

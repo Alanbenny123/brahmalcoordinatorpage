@@ -80,3 +80,4 @@ After creating `.env` and restarting:
 
 Check the server console output - it will show exactly which environment variables are missing.
 
+

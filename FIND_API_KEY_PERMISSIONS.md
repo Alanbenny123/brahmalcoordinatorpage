@@ -110,3 +110,4 @@ If API key permissions don't work, set permissions on collections:
    - **Write**: ✅
 4. Repeat for `tickets` collection
 
+
