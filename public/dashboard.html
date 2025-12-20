@@ -1,75 +1,69 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Event Dashboard</title>
 
   <style>
     body {
-      margin: 0;
       font-family: Arial, sans-serif;
-      background: #f4f6f8;
-    }
-
-    header {
-      background: #2c3e50;
-      color: #fff;
+      background: #f4f6f9;
+      margin: 0;
       padding: 20px;
-      text-align: center;
-      font-size: 26px;
-      font-weight: bold;
     }
 
-    .controls {
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-      margin: 20px;
+    h1, h2 {
+      margin: 5px 0;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .header p {
+      color: gray;
+      margin: 0;
+    }
+
+    .actions {
+      text-align: center;
+      margin-bottom: 20px;
     }
 
     button {
-      padding: 12px 20px;
-      font-size: 16px;
+      padding: 10px 16px;
+      margin: 5px;
       border: none;
-      border-radius: 6px;
+      background: #007bff;
+      color: white;
+      border-radius: 4px;
       cursor: pointer;
     }
 
-    .scan-btn {
-      background: #27ae60;
-      color: white;
+    button.secondary {
+      background: #6c757d;
     }
 
-    .attendance-btn {
-      background: #2980b9;
-      color: white;
+    button:hover {
+      opacity: 0.9;
     }
 
-    .back-btn {
-      background: #7f8c8d;
-      color: white;
-      margin-bottom: 10px;
+    .count {
+      text-align: center;
+      margin-bottom: 15px;
+      font-size: 18px;
     }
 
     .container {
-      width: 90%;
-      margin: auto;
-      overflow: hidden;
-    }
-
-    .slider {
       display: flex;
       width: 200%;
-      transition: transform 0.5s ease-in-out;
+      transition: transform 0.5s ease;
     }
 
-    .table-box {
+    .panel {
       width: 50%;
-      padding: 20px;
-    }
-
-    h3 {
-      margin-top: 0;
+      padding: 10px;
     }
 
     table {
@@ -79,155 +73,147 @@
     }
 
     th, td {
-      padding: 12px;
-      border-bottom: 1px solid #ddd;
+      padding: 10px;
+      border: 1px solid #ddd;
       text-align: left;
     }
 
     th {
-      background: #ecf0f1;
+      background: #f1f1f1;
     }
 
-    .registered {
-      color: orange;
-      font-weight: bold;
-    }
-
-    .attended {
+    .status-true {
       color: green;
       font-weight: bold;
     }
 
-    .count {
-      font-size: 18px;
-      margin-bottom: 10px;
+    .status-false {
+      color: red;
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
 
-<header id="eventName">Event Dashboard</header>
-
-<div class="controls">
-  <button class="scan-btn" onclick="goToScan()">📷 Scan / Register</button>
-  <button class="attendance-btn" onclick="showAttendance()">📋 Attendance</button>
-</div>
-
-<div class="container">
-  <div class="slider" id="slider">
-
-    <!-- REGISTERED TABLE -->
-    <div class="table-box">
-      <h3>Registered Students</h3>
-      <p class="count">Total Registered: <strong id="count">Loading...</strong></p>
-
-      <table>
-        <thead>
-          <tr>
-            <th>Student Name</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody id="registeredTable"></tbody>
-      </table>
-    </div>
-
-    <!-- ATTENDANCE TABLE -->
-    <div class="table-box">
-      <button class="back-btn" onclick="showRegistered()">⬅ Back</button>
-      <h3>Attendance List</h3>
-
-      <table>
-        <thead>
-          <tr>
-            <th>Student Name</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody id="attendanceTable"></tbody>
-      </table>
-    </div>
-
+  <!-- HEADER -->
+  <div class="header">
+    <h1 id="eventName"></h1>
+    <p id="eventId"></p>
   </div>
-</div>
+
+  <!-- ACTION BUTTONS -->
+  <div class="actions">
+    <button onclick="window.location.href='scan.html'">Scan/Register</button>
+    <button onclick="showAttendance()">Attendance</button>
+  </div>
+
+  <!-- COUNT -->
+  <div class="count">
+    Total Registrations: <span id="count">Loading...</span>
+  </div>
+
+  <!-- SLIDE CONTAINER -->
+  <div style="overflow:hidden">
+    <div class="container" id="slider">
+
+      <!-- DASHBOARD PANEL -->
+      <div class="panel">
+        <h2>Registered Students</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Student Name</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="dashboardTable"></tbody>
+        </table>
+      </div>
+
+      <!-- ATTENDANCE PANEL -->
+      <div class="panel">
+        <h2>Attendance List</h2>
+        <button class="secondary" onclick="showDashboard()">⬅ Back</button>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Student Name</th>
+            </tr>
+          </thead>
+          <tbody id="attendanceTable"></tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
 
 <script>
-  const event_id = localStorage.getItem("event_id");
+  const eventId = localStorage.getItem("event_id");
+  const eventName = localStorage.getItem("event_name");
+  const slider = document.getElementById("slider");
 
-  if (!event_id) {
-    alert("Session expired. Login again.");
+  if (!eventId || !eventName) {
+    alert("Session expired. Please login again.");
     window.location.href = "login.html";
   }
 
-  document.getElementById("eventName").innerText =
-    "Event Dashboard - " + event_id;
+  document.getElementById("eventName").innerText = eventName;
+  document.getElementById("eventId").innerText = "Event ID: " + eventId;
 
-  function goToScan() {
-    window.location.href = "scan.html";
-  }
-
+  /* SLIDE CONTROLS */
   function showAttendance() {
-    document.getElementById("slider").style.transform = "translateX(-50%)";
+    slider.style.transform = "translateX(-50%)";
+    loadAttendance();
   }
 
-  function showRegistered() {
-    document.getElementById("slider").style.transform = "translateX(0)";
+  function showDashboard() {
+    slider.style.transform = "translateX(0)";
   }
 
-  /* =====================
-     LOAD TOTAL COUNT
-     ===================== */
-  fetch(`/count/${event_id}`)
+  /* LOAD COUNT */
+  fetch(`/count/${eventId}`)
     .then(res => res.json())
     .then(data => {
       document.getElementById("count").innerText = data.count;
     });
 
-  /* =====================
-     LOAD REGISTERED STUDENTS
-     ===================== */
-  fetch(`/tickets/${event_id}`)
-    .then(res => res.json())
-    .then(data => {
-      const table = document.getElementById("registeredTable");
-      table.innerHTML = "";
-
-      data.forEach(t => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${t.student_name}</td>
-          <td class="${t.usage ? "attended" : "registered"}">
-            ${t.usage ? "Attended" : "Registered"}
-          </td>
-        `;
-        table.appendChild(row);
+  /* LOAD DASHBOARD TABLE */
+  function loadDashboard() {
+    fetch(`/tickets/${eventId}`)
+      .then(res => res.json())
+      .then(data => {
+        const table = document.getElementById("dashboardTable");
+        table.innerHTML = "";
+        data.forEach(t => {
+          table.innerHTML += `
+            <tr>
+              <td>${t.student_name}</td>
+              <td class="${t.usage ? "status-true" : "status-false"}">
+                ${t.usage ? "Registered" : "Not Registered"}
+              </td>
+            </tr>
+          `;
+        });
       });
-    });
+  }
 
-  /* =====================
-     LOAD ATTENDANCE
-     ===================== */
-  fetch(`/attendance/${event_id}`)
-    .then(res => res.json())
-    .then(data => {
-      const table = document.getElementById("attendanceTable");
-      table.innerHTML = "";
-
-      if (data.length === 0) {
-        table.innerHTML =
-          `<tr><td colspan="2">No attendance yet</td></tr>`;
-        return;
-      }
-
-      data.forEach(name => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${name}</td>
-          <td class="attended">Attended</td>
-        `;
-        table.appendChild(row);
+  /* LOAD ATTENDANCE */
+  function loadAttendance() {
+    fetch(`/attendance/${eventId}`)
+      .then(res => res.json())
+      .then(data => {
+        const table = document.getElementById("attendanceTable");
+        table.innerHTML = "";
+        data.forEach(name => {
+          table.innerHTML += `<tr><td>${name}</td></tr>`;
+        });
       });
-    });
+  }
+
+  // Initial load
+  loadDashboard();
 </script>
 
 </body>

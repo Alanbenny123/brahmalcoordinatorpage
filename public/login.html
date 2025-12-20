@@ -1,42 +1,50 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Event Coordinator Login</title>
+  <title>Event Login</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      padding-top: 100px;
-      background-color: #f0f0f0;
+      font-family: Arial;
+      background: #f4f6f9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
     }
-    input {
+    .box {
+      background: white;
+      padding: 25px;
+      border-radius: 6px;
+      width: 300px;
+    }
+    input, button {
+      width: 100%;
       padding: 10px;
-      margin: 5px 0;
-      width: 250px;
-      font-size: 16px;
+      margin-top: 10px;
     }
     button {
-      padding: 10px 20px;
-      font-size: 16px;
+      background: #007bff;
+      color: white;
+      border: none;
       cursor: pointer;
     }
-    #msg {
-      color: red;
+    .msg {
       margin-top: 10px;
+      color: red;
+      text-align: center;
     }
   </style>
 </head>
 <body>
 
-  <h2>Event Coordinator Login</h2>
-
-  <input type="text" id="event_id" placeholder="Event ID"><br>
-  <input type="password" id="event_pass" placeholder="Password"><br>
+<div class="box">
+  <h2>Event Login</h2>
+  <input id="event_id" placeholder="Event ID">
+  <input id="event_pass" type="password" placeholder="Password">
   <button onclick="login()">Login</button>
+  <div class="msg" id="msg"></div>
+</div>
 
-  <p id="msg"></p>
-
-  <script src="login.js"></script>
+<script src="login.js"></script>
 </body>
 </html>

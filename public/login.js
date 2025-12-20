@@ -1,10 +1,9 @@
 function login() {
   const event_id = document.getElementById("event_id").value.trim();
   const event_pass = document.getElementById("event_pass").value.trim();
-  const msg = document.getElementById("msg");
 
   if (!event_id || !event_pass) {
-    msg.innerText = "Please fill both fields";
+    document.getElementById("msg").innerText = "Fill all fields";
     return;
   }
 
@@ -16,14 +15,17 @@ function login() {
   .then(res => res.json())
   .then(data => {
     if (data.success) {
-      localStorage.setItem("event_id", event_id); // store the event ID for dashboard
+
+      // ✅ STORE VALUES FROM SERVER (IMPORTANT)
+      localStorage.setItem("event_id", data.event_id);
+      localStorage.setItem("event_name", data.event_name);
+
       window.location.href = "dashboard.html";
     } else {
-      msg.innerText = data.message;
+      document.getElementById("msg").innerText = data.message;
     }
   })
-  .catch(err => {
-    console.error(err);
-    msg.innerText = "Server error";
+  .catch(() => {
+    document.getElementById("msg").innerText = "Server error";
   });
 }

@@ -34,7 +34,7 @@ app.post("/login", async (req, res) => {
       });
     }
 
-    // Query events collection where field event_id matches
+    // Query events collection using event_id field
     const snapshot = await db
       .collection("events")
       .where("event_id", "==", event_id)
@@ -47,7 +47,7 @@ app.post("/login", async (req, res) => {
       });
     }
 
-    const eventDoc = snapshot.docs[0]; // first matching document
+    const eventDoc = snapshot.docs[0];
     const eventData = eventDoc.data();
 
     if (eventData.event_pass !== event_pass) {
@@ -57,8 +57,10 @@ app.post("/login", async (req, res) => {
       });
     }
 
+    // ✅ UPDATED RESPONSE (event_id + event_name)
     res.json({
       success: true,
+      event_id: event_id,
       event_name: eventData.event_name
     });
 
@@ -105,7 +107,7 @@ app.post("/scan", async (req, res) => {
       });
     }
 
-    // Query tickets collection by ticket_id and event_id fields
+    // Match ticket_id + event_id fields
     const snapshot = await db
       .collection("tickets")
       .where("ticket_id", "==", ticket_id)
@@ -174,20 +176,25 @@ app.get("/attendance/:event_id", async (req, res) => {
   }
 });
 
-/*
-Dashboard additional stuffs 
- */
-
+/* ===========================
+   DASHBOARD ALL TICKETS
+   =========================== */
 app.get("/tickets/:event_id", async (req, res) => {
-  const snapshot = await db
-    .collection("tickets")
-    .where("event_id", "==", req.params.event_id)
-    .get();
+  try {
+    const snapshot = await db
+      .collection("tickets")
+      .where("event_id", "==", req.params.event_id)
+      .get();
 
-  let tickets = [];
-  snapshot.forEach(doc => tickets.push(doc.data()));
+    let tickets = [];
+    snapshot.forEach(doc => tickets.push(doc.data()));
 
-  res.json(tickets);
+    res.json(tickets);
+
+  } catch (error) {
+    console.error("TICKETS ERROR:", error);
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
 /* =======================
@@ -196,4 +203,3 @@ app.get("/tickets/:event_id", async (req, res) => {
 app.listen(3000, () => {
   console.log("✅ Server running at http://localhost:3000");
 });
-
