@@ -1,9 +1,11 @@
 {
   "name": "event-coordinator",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Brahma Fest Event Coordinator System with Appwrite",
+  "main": "server.js",
   "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -13,7 +15,9 @@
   "dependencies": {
     "body-parser": "^2.2.1",
     "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
     "express": "^5.2.1",
-    "firebase-admin": "^13.6.0"
+    "firebase-admin": "^13.6.0",
+    "node-appwrite": "^14.1.0"
   }
 }
