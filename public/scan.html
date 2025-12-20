@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Scan Ticket</title>
+
+  <!-- QR Scanner Library -->
+  <script src="https://unpkg.com/html5-qrcode"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      text-align: center;
+      background: #f4f4f4;
+    }
+
+    #reader {
+      width: 300px;
+      margin: auto;
+    }
+
+    #result {
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    button {
+      padding: 10px 15px;
+      font-size: 16px;
+      margin-top: 20px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>🎟 Scan Ticket QR Code</h2>
+
+  <div id="reader"></div>
+
+  <p id="result">Waiting for scan...</p>
+
+  <button onclick="goBack()">⬅ Back to Dashboard</button>
+
+  <script>
+  const event_id = localStorage.getItem("event_id");
+  const result = document.getElementById("result");
+
+  let isProcessing = false;
+  let html5QrCode;
+
+  if (!event_id) {
+    result.innerText = "Session expired. Login again.";
+    result.style.color = "red";
+  }
+
+  function goBack() {
+    window.location.href = "dashboard.html";
+  }
+
+  function startScanner() {
+    html5QrCode.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: 250 },
+      onScanSuccess,
+      onScanFailure
+    );
+  }
+
+  function onScanSuccess(decodedText) {
+    if (isProcessing) return;
+    isProcessing = true;
+
+    result.innerText = "Processing ticket...";
+    result.style.color = "blue";
+
+    fetch("/scan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ticket_id: decodedText,
+        event_id: event_id
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        result.innerText = `✅ Welcome ${data.student_name}`;
+        result.style.color = "green";
+
+        // 🛑 Stop scanner
+        html5QrCode.stop();
+
+        // ⏱ Countdown message
+        let seconds = 5;
+        const timer = setInterval(() => {
+          result.innerText =
+            `✅ Welcome ${data.student_name} | Next scan in ${seconds}s`;
+          seconds--;
+          if (seconds < 0) {
+            clearInterval(timer);
+            isProcessing = false;
+            startScanner(); // ▶ Restart scanner
+          }
+        }, 1000);
+
+      } else {
+        result.innerText = "❌ " + data.message;
+        result.style.color = "red";
+
+        setTimeout(() => {
+          isProcessing = false;
+        }, 3000);
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      result.innerText = "Server error";
+      result.style.color = "red";
+      isProcessing = false;
+    });
+  }
+
+  function onScanFailure(error) {
+    // ignore camera noise
+  }
+
+  html5QrCode = new Html5Qrcode("reader");
+  startScanner();
+</script>
+
+
+</body>
+</html>

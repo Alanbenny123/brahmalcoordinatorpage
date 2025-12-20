@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Event Coordinator Login</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding-top: 100px;
+      background-color: #f0f0f0;
+    }
+    input {
+      padding: 10px;
+      margin: 5px 0;
+      width: 250px;
+      font-size: 16px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #msg {
+      color: red;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Event Coordinator Login</h2>
+
+  <input type="text" id="event_id" placeholder="Event ID"><br>
+  <input type="password" id="event_pass" placeholder="Password"><br>
+  <button onclick="login()">Login</button>
+
+  <p id="msg"></p>
+
+  <script src="login.js"></script>
+</body>
+</html>
