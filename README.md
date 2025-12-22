@@ -13,69 +13,68 @@ Database: APPWRITE AND FIRBASE
 Auth: Firebase Auth
 
 Styling: Tailwind CSS
-`
 my-next-app/
-├── app/
-│   ├── api/                  # Backend route handlers
-│   ├── auth/                 # Auth pages (login/register)
-│   ├── dashboard/            # User dashboard
-│   ├── admin/                # Admin panel
-│   ├── layout.tsx            # Root layout
-│   ├── page.tsx              # Home page
-│   ├── loading.tsx           # Global loading state
-│   ├── error.tsx             # Error boundary
-│   └── not-found.tsx         # 404 page
+├─ app/
+│  ├─ api/
+│  ├─ auth/
+│  ├─ dashboard/
+│  ├─ admin/
+│  ├─ layout.tsx
+│  ├─ page.tsx
+│  ├─ loading.tsx
+│  ├─ error.tsx
+│  └─ not-found.tsx
 │
-├── components/
-│   ├── ui/                   # Reusable UI components (Tailwind)
-│   ├── layout/               # Navbar, Sidebar, Footer
-│   ├── forms/                # Form components
-│   └── cards/                # Card components
+├─ components/
+│  ├─ ui/
+│  ├─ layout/
+│  ├─ forms/
+│  └─ cards/
 │
-├── lib/
-│   ├── db.ts                 # Database connection
-│   ├── auth.ts               # Auth helpers
-│   ├── permissions.ts        # Role-based access control
-│   └── constants.ts
+├─ lib/
+│  ├─ db.ts
+│  ├─ auth.ts
+│  ├─ permissions.ts
+│  └─ constants.ts
 │
-├── services/
-│   ├── auth.service.ts
-│   ├── user.service.ts
-│   ├── event.service.ts
-│   └── payment.service.ts
+├─ services/
+│  ├─ auth.service.ts
+│  ├─ user.service.ts
+│  ├─ event.service.ts
+│  └─ payment.service.ts
 │
-├── hooks/
-│   ├── useAuth.ts
-│   ├── useUser.ts
-│   └── useFetch.ts
+├─ hooks/
+│  ├─ useAuth.ts
+│  ├─ useUser.ts
+│  └─ useFetch.ts
 │
-├── store/
-│   ├── auth.store.ts        
-│   └── ui.store.ts
+├─ store/
+│  ├─ auth.store.ts
+│  └─ ui.store.ts
 │
-├── types/
-│   ├── user.ts
-│   ├── event.ts
-│   └── api.ts
+├─ types/
+│  ├─ user.ts
+│  ├─ event.ts
+│  └─ api.ts
 │
-├── utils/
-│   ├── formatter.ts
-│   ├── validator.ts
-│   └── logger.ts
+├─ utils/
+│  ├─ formatter.ts
+│  ├─ validator.ts
+│  └─ logger.ts
 │
-├── styles/
-│   └── globals.css           # Tailwind base styles
+├─ styles/
+│  └─ globals.css
 │
-├── public/
-│   ├── images/
-│   └── favicon.ico
+├─ public/
+│  ├─ images/
+│  └─ favicon.ico
 │
-├── middleware.ts             # Route protection (auth/admin)
-├── next.config.js
-├── tsconfig.json
-├── .env.local
-└── package.json
-`
+├─ middleware.ts
+├─ next.config.js
+├─ tsconfig.json
+├─ .env.local
+└─ package.json
+
 
 📦 Folder Explanation
 app/
