@@ -77,6 +77,7 @@ my-next-app/
 ├── .env.local
 └── package.json
 
+
 📦 Folder Explanation
 app/
 
