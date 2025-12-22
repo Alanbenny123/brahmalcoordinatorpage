@@ -14,29 +14,28 @@ Auth: Firebase Auth
 
 Styling: Tailwind CSS
 `
-📁 Project Structure
 my-next-app/
 ├── app/
-│   ├── api/
-│   ├── auth/
-│   ├── dashboard/
-│   ├── admin/
-│   ├── layout.tsx
-│   ├── page.tsx
-│   ├── loading.tsx
-│   ├── error.tsx
-│   └── not-found.tsx
+│   ├── api/                  # Backend route handlers
+│   ├── auth/                 # Auth pages (login/register)
+│   ├── dashboard/            # User dashboard
+│   ├── admin/                # Admin panel
+│   ├── layout.tsx            # Root layout
+│   ├── page.tsx              # Home page
+│   ├── loading.tsx           # Global loading state
+│   ├── error.tsx             # Error boundary
+│   └── not-found.tsx         # 404 page
 │
 ├── components/
-│   ├── ui/
-│   ├── layout/
-│   ├── forms/
-│   └── cards/
+│   ├── ui/                   # Reusable UI components (Tailwind)
+│   ├── layout/               # Navbar, Sidebar, Footer
+│   ├── forms/                # Form components
+│   └── cards/                # Card components
 │
 ├── lib/
-│   ├── db.ts
-│   ├── auth.ts
-│   ├── permissions.ts
+│   ├── db.ts                 # Database connection
+│   ├── auth.ts               # Auth helpers
+│   ├── permissions.ts        # Role-based access control
 │   └── constants.ts
 │
 ├── services/
@@ -51,7 +50,7 @@ my-next-app/
 │   └── useFetch.ts
 │
 ├── store/
-│   ├── auth.store.ts
+│   ├── auth.store.ts        
 │   └── ui.store.ts
 │
 ├── types/
@@ -65,13 +64,13 @@ my-next-app/
 │   └── logger.ts
 │
 ├── styles/
-│   └── globals.css
+│   └── globals.css           # Tailwind base styles
 │
 ├── public/
 │   ├── images/
 │   └── favicon.ico
 │
-├── middleware.ts
+├── middleware.ts             # Route protection (auth/admin)
 ├── next.config.js
 ├── tsconfig.json
 ├── .env.local
