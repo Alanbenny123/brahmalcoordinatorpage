@@ -13,6 +13,7 @@ Database: APPWRITE AND FIRBASE
 Auth: Firebase Auth
 
 Styling: Tailwind CSS
+
 my-next-app/
 ├─ app/
 │  ├─ api/
