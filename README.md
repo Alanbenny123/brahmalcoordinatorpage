@@ -13,7 +13,7 @@ Database: APPWRITE AND FIRBASE
 Auth: Firebase Auth
 
 Styling: Tailwind CSS
-
+`
 📁 Project Structure
 my-next-app/
 ├── app/
@@ -76,7 +76,7 @@ my-next-app/
 ├── tsconfig.json
 ├── .env.local
 └── package.json
-
+`
 
 📦 Folder Explanation
 app/
