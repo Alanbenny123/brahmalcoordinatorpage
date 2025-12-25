@@ -1,160 +1,175 @@
 🧱 Tech Stack
 
-Next.js (App Router)
+    Next.js (App Router)
 
-TypeScript
+    TypeScript
 
-React
+    React
 
-API Routes (Route Handlers)
+    API Routes (Route Handlers)
 
-Database: APPWRITE AND FIRBASE
+    Database: APPWRITE AND FIRBASE
 
-Auth: Firebase Auth
+    Auth: Firebase Auth
 
-Styling: Tailwind CSS
+    Styling: Tailwind CSS
 ```
-my-next-app/
-├─ app/
-│  ├─ api/
-│  ├─ auth/
-│  ├─ dashboard/
-│  ├─ admin/
-│  ├─ layout.tsx
-│  ├─ page.tsx
-│  ├─ loading.tsx
-│  ├─ error.tsx
-│  └─ not-found.tsx
-│
-├─ components/
-│  ├─ ui/
-│  ├─ layout/
-│  ├─ forms/
-│  └─ cards/
-│
-├─ lib/
-│  ├─ db.ts
-│  ├─ auth.ts
-│  ├─ permissions.ts
-│  └─ constants.ts
-│
-├─ services/
-│  ├─ auth.service.ts
-│  ├─ user.service.ts
-│  ├─ event.service.ts
-│  └─ payment.service.ts
-│
-├─ hooks/
-│  ├─ useAuth.ts
-│  ├─ useUser.ts
-│  └─ useFetch.ts
-│
-├─ store/
-│  ├─ auth.store.ts
-│  └─ ui.store.ts
-│
-├─ types/
-│  ├─ user.ts
-│  ├─ event.ts
-│  └─ api.ts
-│
-├─ utils/
-│  ├─ formatter.ts
-│  ├─ validator.ts
-│  └─ logger.ts
-│
-├─ styles/
-│  └─ globals.css
-│
-├─ public/
-│  ├─ images/
-│  └─ favicon.ico
-│
-├─ middleware.ts
-├─ next.config.js
-├─ tsconfig.json
-├─ .env.local
-└─ package.json
+/src
+ ├── app
+ │    ├── (public)                    → Routes accessible without login
+ │    │     ├── page.tsx              → Home Page
+ │    │     ├── about/page.tsx
+ │    │     ├── events
+ │    │     │     ├── page.tsx        → Event Listing
+ │    │     │     └── [eventId]/page.tsx → Event Details
+ │    │     ├── auth
+ │    │     │     ├── login/page.tsx
+ │    │     │     └── register/page.tsx
+ │    │     └── verify/page.tsx        → Public ticket verification
+ │
+ │    ├── (protected)                 → Requires authentication
+ │    │     ├── layout.tsx            → Auth guard wrapper
+ │    │     ├── dashboard
+ │    │     │      ├── page.tsx       → User dashboard
+ │    │     │      ├── tickets.tsx    → User tickets
+ │    │     │      └── certificates.tsx → Certificates
+ │    │     ├── events/register/[eventId]
+ │    │     │      ├── single.tsx
+ │    │     │      └── group.tsx
+ │    │     └── admin
+ │    │            ├── page.tsx       → Admin panel
+ │    │            └── attendance/[eventId]/page.tsx
+ │
+ │    ├── api                         → Backend (server-only)
+ │    │     ├── events
+ │    │     │     ├── list/route.ts
+ │    │     │     
+ │    │     ├── tickets
+ │    │     │     ├── generate/route.ts
+ │    │     │     ├── scan/route.ts
+ │    │     │     ├── mark-attendance/route.ts
+ |    |     |     ├── close-ticket/route.ts
+ │    │     │     └── list/route.ts
+ │    │     └── certificates/generate/route.ts
+ │
+ ├── lib
+ │     ├── appwrite
+ │     │     ├── client.ts            → Browser Appwrite client
+ │     │     └── server.ts            → Server-side Appwrite client
+ │     ├── tickets.ts
+ │     ├── certificates.ts
+ │     └── validation.ts
+ │
+ ├── components
+ │     ├── EventCard.tsx
+ │     ├── TicketCard.tsx
+ │     └── CertificateViewer.tsx
+ │
+ ├── utils
+ │     ├── qr.ts
+ │     ├── ticketId.ts
+ │     └── format.ts
+ │
+ ├── types
+ │     └── index.ts
+ │
+ └── middleware.ts                    → Route protection
 
-```
-📦 Folder Explanation
-app/
 
-Main routing system (App Router)
 
-Handles pages, layouts, loading & error boundaries
+TICKET ARCHITECTURE
 
-api/ contains backend route handlers
+Event Created
+   ↓
+User Registers (Single / Group)
+   ↓
+Ticket Generated (active = true)
+   ↓
+QR Scanned by Coordinator
+   ↓
+Attendance Marked (per user)
+   ↓
+Event Marked Completed
+   ↓
+All Tickets Deactivated
+   ↓
+Certificates Generated
 
-components/
 
-Reusable UI components
 
-Split into UI primitives, layouts, forms, and cards
 
-lib/
+🔌 Backend API Reference
+    1️⃣ Generate Ticket
 
-Core utilities (DB, auth helpers, constants, permissions)
+    POST /api/tickets/generate
 
-services/
+    {
+    "event_id": "EVT101",
+    "stud_ids": ["USER_1", "USER_2"]
+    }
 
-Business logic layer
+    Response
 
-Keeps API routes clean and maintainable
+    {
+    "ok": true,
+    "ticket_id": "TICKET_ABC",
+    "event_id": "EVT101"
+    }
 
-hooks/
 
-Custom React hooks for reusable logic
+    2️⃣ Scan Ticket (QR)
 
-types/
+    POST /api/tickets/scan
 
-Centralized TypeScript interfaces & types
+    {
+    "ticket_id": "TICKET_ABC",
+    "event_id": "EVT101"
+    }
 
-utils/
 
-Helper functions (formatting, validation, logging)
+    Response
 
-middleware.ts
+    {
+    "ok": true,
+    "ticket_active": true,
+    "members": [
+        { "stud_id": "USER_1", "present": true },
+        { "stud_id": "USER_2", "present": false }
+    ]
+    }
 
-Route protection
 
-Role-based access control (admin/user)
+    3️⃣ Mark Attendance
 
-🔐 Authentication & Authorization
+    POST /api/tickets/mark-attendance
 
-Protect routes like /dashboard and /admin
+    {
+    "ticket_id": "TICKET_ABC",
+    "stud_id": "USER_1",
+    "event_id": "EVT101"
+    }
 
-Middleware enforces access control
 
-Supports:
+    Response
 
-Role-based routing
+    {
+    "ok": true,
+    "message": "Attendance marked successfully"
+    }
 
-Token/session validation
 
-🌐 API Routes
+    4️⃣ Complete Event (Close All Tickets)
 
-Located in:
+    POST /api/tickets/close-ticket
 
-app/api/*
+    {
+    "event_id": "EVT101"
+    }
 
-Example:
 
-POST /api/auth
+    Response
 
-GET /api/users
-
-POST /api/events
-
-GET /api/payments
-
-Business logic lives in services/, not inside routes.
-
-🛠 Environment Variables
-
-Create a .env.local file:
-
-DATABASE_URL=
-NEXT_PUBLIC_APP_URL=
-AUTH_SECRET=
-
+    {
+    "ok": true,
+    "tickets_closed": 120
+    }
