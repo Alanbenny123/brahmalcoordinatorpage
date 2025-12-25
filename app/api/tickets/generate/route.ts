@@ -45,7 +45,33 @@ export async function POST(req: Request) {
 
     await Promise.all(attendancePromises);
 
-    // 5️⃣ Return success response
+    // 5️⃣ Add ticket ID to each user's tickets[] array
+    const userUpdatePromises = stud_ids.map(async (user_id: string) => {
+      // Fetch user document
+      const userDoc = await backendDB.getDocument(
+        process.env.APPWRITE_DATABASE_ID!,
+        process.env.APPWRITE_USERS_COLLECTION_ID!,
+        user_id
+      );
+
+      const existingTickets = Array.isArray(userDoc.tickets)
+        ? userDoc.tickets
+        : [];
+
+      // Append new ticket ID
+      return backendDB.updateDocument(
+        process.env.APPWRITE_DATABASE_ID!,
+        process.env.APPWRITE_USERS_COLLECTION_ID!,
+        user_id,
+        {
+          tickets: [...existingTickets, ticket.$id],
+        }
+      );
+    });
+
+    await Promise.all(userUpdatePromises);
+
+    // 6️⃣ Return success response
     return NextResponse.json({
       ok: true,
       ticket_id: ticket.$id,
