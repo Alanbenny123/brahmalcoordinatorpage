@@ -1,112 +1,42 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>Scan Ticket | BRAHMA'26</title>
+  <meta charset="UTF-8">
+  <title>Scan Ticket</title>
 
-<!-- QR Scanner Library -->
-<script src="https://unpkg.com/html5-qrcode"></script>
+  <!-- QR Scanner Library -->
+  <script src="https://unpkg.com/html5-qrcode"></script>
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      text-align: center;
+      background: #f4f4f4;
+    }
 
-<style>
-* {
-  box-sizing: border-box;
-}
+    #reader {
+      width: 300px;
+      margin: auto;
+    }
 
-body {
-  margin: 0;
-  font-family: 'Inter', sans-serif;
-  background: #0b0f14;
-  color: #eaeaea;
-  padding: 25px;
-  text-align: center;
-}
+    #result {
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: bold;
+    }
 
-/* ================= TOP BAR ================= */
-.topbar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 25px;
-}
-
-.topbar h1 {
-  margin: 0;
-  font-size: 24px;
-  font-weight: 700;
-  letter-spacing: 1px;
-}
-
-/* ================= SCAN CARD ================= */
-.scan-card {
-  max-width: 420px;
-  margin: auto;
-  background: #121821;
-  border-radius: 10px;
-  padding: 20px;
-  border: 1px solid #222;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-  animation: fadeUp 0.6s ease;
-}
-
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(15px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.scan-card h2 {
-  margin-top: 0;
-  font-weight: 600;
-  margin-bottom: 15px;
-}
-
-/* ================= QR READER ================= */
-#reader {
-  width: 100%;
-  border-radius: 8px;
-  overflow: hidden;
-  margin-bottom: 15px;
-}
-
-/* ================= RESULT ================= */
-#result {
-  margin-top: 10px;
-  font-size: 16px;
-  font-weight: 600;
-  min-height: 24px;
-}
-
-/* ================= BUTTON ================= */
-button {
-  margin-top: 20px;
-  padding: 10px 18px;
-  font-size: 15px;
-  border-radius: 6px;
-  border: 1px solid #333;
-  background: transparent;
-  color: #ddd;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-button:hover {
-  background: #1f2937;
-  transform: translateY(-2px);
-}
-</style>
+    button {
+      padding: 10px 15px;
+      font-size: 16px;
+      margin-top: 20px;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
 
-<!-- HEADER -->
-<div class="topbar">
-  <h1>BRAHMA'26 – Ticket Scan</h1>
-</div>
-
-<!-- SCAN CARD -->
-<div class="scan-card">
-
-  <h2>🎟 Scan Ticket QR</h2>
+  <h2>🎟 Scan Ticket QR Code</h2>
 
   <div id="reader"></div>
 
@@ -114,9 +44,7 @@ button:hover {
 
   <button onclick="goBack()">⬅ Back to Dashboard</button>
 
-</div>
-
-<script>
+  <script>
   const event_id = localStorage.getItem("event_id");
   const result = document.getElementById("result");
 
@@ -146,7 +74,7 @@ button:hover {
     isProcessing = true;
 
     result.innerText = "Processing ticket...";
-    result.style.color = "#4da3ff";
+    result.style.color = "blue";
 
     fetch("/scan", {
       method: "POST",
@@ -160,10 +88,12 @@ button:hover {
     .then(data => {
       if (data.success) {
         result.innerText = `✅ Welcome ${data.student_name}`;
-        result.style.color = "#2ecc71";
+        result.style.color = "green";
 
+        // 🛑 Stop scanner
         html5QrCode.stop();
 
+        // ⏱ Countdown message
         let seconds = 5;
         const timer = setInterval(() => {
           result.innerText =
@@ -172,13 +102,13 @@ button:hover {
           if (seconds < 0) {
             clearInterval(timer);
             isProcessing = false;
-            startScanner();
+            startScanner(); // ▶ Restart scanner
           }
         }, 1000);
 
       } else {
         result.innerText = "❌ " + data.message;
-        result.style.color = "#e74c3c";
+        result.style.color = "red";
 
         setTimeout(() => {
           isProcessing = false;
@@ -188,18 +118,19 @@ button:hover {
     .catch(err => {
       console.error(err);
       result.innerText = "Server error";
-      result.style.color = "#e74c3c";
+      result.style.color = "red";
       isProcessing = false;
     });
   }
 
   function onScanFailure(error) {
-    // ignore scan noise
+    // ignore camera noise
   }
 
   html5QrCode = new Html5Qrcode("reader");
   startScanner();
 </script>
+
 
 </body>
 </html>

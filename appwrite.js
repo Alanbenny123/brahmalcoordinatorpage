@@ -26,7 +26,8 @@ const databases = new Databases(client);
 const DATABASE_ID = process.env.APPWRITE_DATABASE_ID;
 const COLLECTIONS = {
     EVENTS: process.env.APPWRITE_COLLECTION_EVENTS || 'events',
-    TICKETS: process.env.APPWRITE_COLLECTION_TICKETS || 'tickets'
+    TICKETS: process.env.APPWRITE_COLLECTION_TICKETS || 'tickets',
+    COORDINATORS: process.env.APPWRITE_COLLECTION_COORDINATORS || 'event_coordinators'
 };
 
 // Helper function to query events by event_id
@@ -126,6 +127,52 @@ async function markTicketAsUsed(documentId) {
     }
 }
 
+// Helper function to get coordinators by event_id
+async function getCoordinatorsByEventId(event_id) {
+    try {
+        const response = await databases.listDocuments(
+            DATABASE_ID,
+            COLLECTIONS.COORDINATORS,
+            [Query.equal('event_id', event_id)]
+        );
+        return response.documents;
+    } catch (error) {
+        console.error('Error fetching coordinators:', error);
+        return []; // Return empty array if collection doesn't exist yet
+    }
+}
+
+// Helper function to get events by coordinator name (search coordinator[] array)
+async function getEventsByCoordinator(coordinatorName) {
+    try {
+        // Query events where coordinator[] array contains the coordinator name
+        const response = await databases.listDocuments(
+            DATABASE_ID,
+            COLLECTIONS.EVENTS,
+            [Query.search('coordinator', coordinatorName)] // Search in coordinator array
+        );
+        return response.documents;
+    } catch (error) {
+        console.error('Error fetching events by coordinator:', error);
+        // Fallback: get all events and filter client-side (less efficient)
+        try {
+            const allEvents = await databases.listDocuments(
+                DATABASE_ID,
+                COLLECTIONS.EVENTS,
+                []
+            );
+            return allEvents.documents.filter(event => 
+                event.coordinator && 
+                Array.isArray(event.coordinator) && 
+                event.coordinator.includes(coordinatorName)
+            );
+        } catch (fallbackError) {
+            console.error('Fallback query failed:', fallbackError);
+            return [];
+        }
+    }
+}
+
 module.exports = {
     databases,
     DATABASE_ID,
@@ -135,5 +182,7 @@ module.exports = {
     countTicketsByEventId,
     getTicketsByEventId,
     getAttendedTickets,
-    markTicketAsUsed
+    markTicketAsUsed,
+    getCoordinatorsByEventId,
+    getEventsByCoordinator
 };

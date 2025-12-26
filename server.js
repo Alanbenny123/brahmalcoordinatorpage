@@ -8,7 +8,9 @@ const {
   countTicketsByEventId,
   getTicketsByEventId,
   getAttendedTickets,
-  markTicketAsUsed
+  markTicketAsUsed,
+  getCoordinatorsByEventId,
+  getEventsByCoordinator
 } = require("./appwrite");
 
 const app = express();
@@ -58,10 +60,25 @@ app.post("/login", async (req, res) => {
       });
     }
 
+    // Get coordinators for this event
+    const coordinators = await getCoordinatorsByEventId(event_id);
+    
+    // Generate UUID session token
+    const { v4: uuidv4 } = require('uuid');
+    const sessionToken = uuidv4();
+    
     res.json({
       success: true,
       event_id: event.event_id,
-      event_name: event.event_name
+      event_name: event.event_name,
+      coordinators: coordinators,
+      session_token: sessionToken,
+      event_data: {
+        venue: event.venue,
+        date: event.date,
+        time: event.time,
+        status: event.completed ? 'completed' : (new Date(event.date) > new Date() ? 'upcoming' : 'live')
+      }
     });
 
   } catch (error) {
@@ -181,6 +198,51 @@ app.get("/tickets/:event_id", async (req, res) => {
     console.error("TICKETS ERROR:", error);
     const errorMessage = error.message || "Server error";
     res.status(500).json({
+      message: process.env.NODE_ENV === 'development' ? errorMessage : "Server error"
+    });
+  }
+});
+
+/* =======================
+   GET ASSIGNED EVENTS FOR COORDINATOR
+   ======================= */
+app.get("/coord/events", async (req, res) => {
+  try {
+    const { coordinator_name } = req.query;
+    
+    if (!coordinator_name) {
+      return res.status(400).json({
+        success: false,
+        message: "Coordinator name is required"
+      });
+    }
+
+    // Get all events where coordinator[] array contains this coordinator
+    const events = await getEventsByCoordinator(coordinator_name);
+    
+    // Format events for mobile UI
+    const formattedEvents = events.map(event => ({
+      $id: event.$id,
+      event_id: event.event_id,
+      event_name: event.event_name,
+      venue: event.venue || '',
+      date: event.date || '',
+      time: event.time || '',
+      status: event.completed ? 'completed' : 
+              (new Date(event.date) > new Date() ? 'upcoming' : 'live'),
+      poster: event.poster || null
+    }));
+
+    res.json({
+      success: true,
+      events: formattedEvents
+    });
+
+  } catch (error) {
+    console.error("COORD EVENTS ERROR:", error);
+    const errorMessage = error.message || "Server error";
+    res.status(500).json({
+      success: false,
       message: process.env.NODE_ENV === 'development' ? errorMessage : "Server error"
     });
   }
