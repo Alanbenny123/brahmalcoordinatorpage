@@ -2,7 +2,16 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const path = require("path");
-const db = require("./firebase");
+const {
+  getEventByEventId,
+  getTicketByIds,
+  countTicketsByEventId,
+  getTicketsByEventId,
+  getAttendedTickets,
+  markTicketAsUsed,
+  getCoordinatorsByEventId,
+  getEventsByCoordinator
+} = require("./appwrite");
 
 const app = express();
 
@@ -34,41 +43,50 @@ app.post("/login", async (req, res) => {
       });
     }
 
-    // Query events collection using event_id field
-    const snapshot = await db
-      .collection("events")
-      .where("event_id", "==", event_id)
-      .get();
+    // Query events collection using Appwrite
+    const event = await getEventByEventId(event_id);
 
-    if (snapshot.empty) {
+    if (!event) {
       return res.json({
         success: false,
         message: "Event not found"
       });
     }
 
-    const eventDoc = snapshot.docs[0];
-    const eventData = eventDoc.data();
-
-    if (eventData.event_pass !== event_pass) {
+    if (event.event_pass !== event_pass) {
       return res.json({
         success: false,
         message: "Wrong password"
       });
     }
 
-    // ✅ UPDATED RESPONSE (event_id + event_name)
+    // Get coordinators for this event
+    const coordinators = await getCoordinatorsByEventId(event_id);
+    
+    // Generate UUID session token
+    const { v4: uuidv4 } = require('uuid');
+    const sessionToken = uuidv4();
+    
     res.json({
       success: true,
-      event_id: event_id,
-      event_name: eventData.event_name
+      event_id: event.event_id,
+      event_name: event.event_name,
+      coordinators: coordinators,
+      session_token: sessionToken,
+      event_data: {
+        venue: event.venue,
+        date: event.date,
+        time: event.time,
+        status: event.completed ? 'completed' : (new Date(event.date) > new Date() ? 'upcoming' : 'live')
+      }
     });
 
   } catch (error) {
     console.error("LOGIN ERROR:", error);
+    const errorMessage = error.message || "Server error";
     res.status(500).json({
       success: false,
-      message: "Server error"
+      message: process.env.NODE_ENV === 'development' ? errorMessage : "Server error"
     });
   }
 });
@@ -80,16 +98,16 @@ app.get("/count/:event_id", async (req, res) => {
   try {
     const { event_id } = req.params;
 
-    const snapshot = await db
-      .collection("tickets")
-      .where("event_id", "==", event_id)
-      .get();
+    const count = await countTicketsByEventId(event_id);
 
-    res.json({ count: snapshot.size });
+    res.json({ count });
 
   } catch (error) {
     console.error("COUNT ERROR:", error);
-    res.status(500).json({ message: "Server error" });
+    const errorMessage = error.message || "Server error";
+    res.status(500).json({ 
+      message: process.env.NODE_ENV === 'development' ? errorMessage : "Server error" 
+    });
   }
 });
 
@@ -107,22 +125,15 @@ app.post("/scan", async (req, res) => {
       });
     }
 
-    // Match ticket_id + event_id fields
-    const snapshot = await db
-      .collection("tickets")
-      .where("ticket_id", "==", ticket_id)
-      .where("event_id", "==", event_id)
-      .get();
+    // Query tickets collection using Appwrite
+    const ticket = await getTicketByIds(ticket_id, event_id);
 
-    if (snapshot.empty) {
+    if (!ticket) {
       return res.json({
         success: false,
         message: "Ticket does not belong to this event or does not exist"
       });
     }
-
-    const ticketDoc = snapshot.docs[0];
-    const ticket = ticketDoc.data();
 
     if (ticket.usage === true) {
       return res.json({
@@ -131,7 +142,8 @@ app.post("/scan", async (req, res) => {
       });
     }
 
-    await ticketDoc.ref.update({ usage: true });
+    // Mark ticket as used
+    await markTicketAsUsed(ticket.$id);
 
     res.json({
       success: true,
@@ -141,9 +153,10 @@ app.post("/scan", async (req, res) => {
 
   } catch (error) {
     console.error("SCAN ERROR:", error);
+    const errorMessage = error.message || "Server error";
     res.status(500).json({
       success: false,
-      message: "Server error"
+      message: process.env.NODE_ENV === 'development' ? errorMessage : "Server error"
     });
   }
 });
@@ -155,45 +168,83 @@ app.get("/attendance/:event_id", async (req, res) => {
   try {
     const { event_id } = req.params;
 
-    const snapshot = await db
-      .collection("tickets")
-      .where("event_id", "==", event_id)
-      .where("usage", "==", true)
-      .get();
+    const tickets = await getAttendedTickets(event_id);
 
     let students = [];
-    snapshot.forEach(doc => {
-      students.push(doc.data().student_name);
+    tickets.forEach(ticket => {
+      students.push(ticket.student_name);
     });
 
     res.json(students);
 
   } catch (error) {
     console.error("ATTENDANCE ERROR:", error);
+    const errorMessage = error.message || "Server error";
     res.status(500).json({
-      message: "Server error"
+      message: process.env.NODE_ENV === 'development' ? errorMessage : "Server error"
     });
   }
 });
 
-/* ===========================
-   DASHBOARD ALL TICKETS
-   =========================== */
+/*
+Dashboard additional stuffs 
+ */
+
 app.get("/tickets/:event_id", async (req, res) => {
   try {
-    const snapshot = await db
-      .collection("tickets")
-      .where("event_id", "==", req.params.event_id)
-      .get();
-
-    let tickets = [];
-    snapshot.forEach(doc => tickets.push(doc.data()));
-
+    const tickets = await getTicketsByEventId(req.params.event_id);
     res.json(tickets);
-
   } catch (error) {
     console.error("TICKETS ERROR:", error);
-    res.status(500).json({ message: "Server error" });
+    const errorMessage = error.message || "Server error";
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'development' ? errorMessage : "Server error"
+    });
+  }
+});
+
+/* =======================
+   GET ASSIGNED EVENTS FOR COORDINATOR
+   ======================= */
+app.get("/coord/events", async (req, res) => {
+  try {
+    const { coordinator_name } = req.query;
+    
+    if (!coordinator_name) {
+      return res.status(400).json({
+        success: false,
+        message: "Coordinator name is required"
+      });
+    }
+
+    // Get all events where coordinator[] array contains this coordinator
+    const events = await getEventsByCoordinator(coordinator_name);
+    
+    // Format events for mobile UI
+    const formattedEvents = events.map(event => ({
+      $id: event.$id,
+      event_id: event.event_id,
+      event_name: event.event_name,
+      venue: event.venue || '',
+      date: event.date || '',
+      time: event.time || '',
+      status: event.completed ? 'completed' : 
+              (new Date(event.date) > new Date() ? 'upcoming' : 'live'),
+      poster: event.poster || null
+    }));
+
+    res.json({
+      success: true,
+      events: formattedEvents
+    });
+
+  } catch (error) {
+    console.error("COORD EVENTS ERROR:", error);
+    const errorMessage = error.message || "Server error";
+    res.status(500).json({
+      success: false,
+      message: process.env.NODE_ENV === 'development' ? errorMessage : "Server error"
+    });
   }
 });
 

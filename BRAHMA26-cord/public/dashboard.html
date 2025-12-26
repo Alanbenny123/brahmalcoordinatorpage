@@ -217,6 +217,7 @@ th {
 }
 </style>
 </head>
+
 <body>
 
 <!-- TOP BAR -->
@@ -304,12 +305,12 @@ const eventId = localStorage.getItem("event_id");
 const eventName = localStorage.getItem("event_name");
 const slider = document.getElementById("slider");
 
-if (!eventId) {
+if (!eventId || !eventName) {
   alert("Session expired. Please login again.");
   window.location.href = "login.html";
 }
 
-document.getElementById("eventName").innerText = eventName || "Event Dashboard";
+document.getElementById("eventName").innerText = eventName;
 document.getElementById("eventId").innerText = "Event ID: " + eventId;
 
 function showAttendance() {
@@ -385,10 +386,6 @@ function loadAttendance() {
     .then(data => {
       const table = document.getElementById("attendanceTable");
       table.innerHTML = "";
-      if (data.length === 0) {
-        table.innerHTML = `<tr><td>No attendance yet</td></tr>`;
-        return;
-      }
       data.forEach(name => {
         table.innerHTML += `<tr><td>${name}</td></tr>`;
       });

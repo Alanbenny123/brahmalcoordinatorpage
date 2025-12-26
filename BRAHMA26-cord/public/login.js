@@ -17,7 +17,7 @@ function login() {
     if (data.success) {
 
       // ✅ STORE VALUES FROM SERVER (IMPORTANT)
-      localStorage.setItem("event_id", data.event_id || event_id);
+      localStorage.setItem("event_id", data.event_id);
       localStorage.setItem("event_name", data.event_name);
 
       window.location.href = "dashboard.html";
