@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>BRAHMA'26 Dashboard</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -16,7 +17,15 @@ body {
   font-family: 'Inter', sans-serif;
   background: #0b0f14;
   color: #eaeaea;
-  padding: 20px 30px;
+  padding: 15px;
+  min-height: 100vh;
+}
+
+/* Mobile-first responsive design */
+@media (min-width: 768px) {
+  body {
+    padding: 20px 30px;
+  }
 }
 
 /* ================= TOP BAR ================= */
@@ -43,10 +52,16 @@ body {
 
 .brand-text {
   margin: 0;
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
   letter-spacing: 1px;
   transition: letter-spacing 0.4s ease, color 0.4s ease;
+}
+
+@media (min-width: 768px) {
+  .brand-text {
+    font-size: 24px;
+  }
 }
 
 .brand:hover .logo {
@@ -219,18 +234,31 @@ th {
 /* ================= STATS SECTION ================= */
 .stats-section {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 15px;
-  margin-bottom: 25px;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+@media (min-width: 480px) {
+  .stats-section {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+  }
 }
 
 .stat-card {
   background: #121821;
   border: 1px solid #222;
   border-radius: 8px;
-  padding: 20px;
+  padding: 15px;
   text-align: center;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+@media (min-width: 768px) {
+  .stat-card {
+    padding: 20px;
+  }
 }
 
 .stat-card:hover {
@@ -256,8 +284,14 @@ th {
 
 .stat-value {
   color: #07fac5;
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 700;
+}
+
+@media (min-width: 768px) {
+  .stat-value {
+    font-size: 28px;
+  }
 }
 
 .stat-card.checked-in .stat-value {
@@ -275,22 +309,33 @@ th {
 
 .participants-tabs {
   display: flex;
-  gap: 10px;
+  gap: 5px;
   margin-bottom: 15px;
   border-bottom: 2px solid #222;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .tab-button {
-  padding: 10px 20px;
+  padding: 10px 15px;
   background: transparent;
   border: none;
   color: #aaa;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   border-bottom: 2px solid transparent;
   margin-bottom: -2px;
   transition: all 0.3s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+@media (min-width: 480px) {
+  .tab-button {
+    padding: 10px 20px;
+    font-size: 14px;
+  }
 }
 
 .tab-button.active {
@@ -314,12 +359,21 @@ th {
   background: #121821;
   border: 1px solid #222;
   border-radius: 6px;
-  padding: 15px;
+  padding: 12px;
   margin-bottom: 10px;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 8px;
   transition: all 0.3s ease;
+}
+
+@media (min-width: 480px) {
+  .participant-item {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+  }
 }
 
 .participant-item:hover {

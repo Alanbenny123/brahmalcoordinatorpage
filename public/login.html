@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Coordinator Login</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
@@ -13,13 +15,20 @@
     body {
       margin: 0;
       font-family: 'Inter', sans-serif;
-      height: 100vh;
+      min-height: 100vh;
       background: radial-gradient(circle at top, #141414, #070707);
       display: flex;
       justify-content: center;
       align-items: center;
       color: #fff;
-      overflow: hidden;
+      overflow-x: hidden;
+      padding: 15px;
+    }
+
+    @media (min-width: 768px) {
+      body {
+        padding: 20px;
+      }
     }
 
     body::before {
@@ -42,29 +51,49 @@
        ===================== */
     .bg-card {
       position: absolute;
-      width: 200px;
-      height: 220px;
+      width: 120px;
+      height: 132px;
       border-radius: 18px;
       overflow: hidden;
       background-size: cover;
       background-position: center;
-      filter: blur(1px);
-      opacity: 0.55;
+      filter: blur(2px);
+      opacity: 0.25;
       z-index: 1;
       animation: floatSlow 8s ease-in-out infinite;
     }
 
+    @media (min-width: 768px) {
+      .bg-card {
+        width: 200px;
+        height: 220px;
+        opacity: 0.55;
+        filter: blur(1px);
+      }
+    }
+
     .bg-card.one {
-      top: 18%;
-      left: 30%;
+      top: 5%;
+      left: 10%;
       background-image: url("/Blogo.jpeg");
     }
 
     .bg-card.two {
-      bottom: 18%;
-      right: 31%;
+      bottom: 5%;
+      right: 10%;
       background-image: url("/Alogo.jpeg");
       animation-delay: 3s;
+    }
+
+    @media (min-width: 768px) {
+      .bg-card.one {
+        top: 5%;
+        left: 20%;
+      }
+      .bg-card.two {
+        bottom: 5%;
+        right: 20%;
+      }
     }
 
     @keyframes floatSlow {
@@ -79,14 +108,28 @@
     .box {
       position: relative;
       z-index: 2;
-      width: 330px;
-      padding: 32px;
+      width: 100%;
+      max-width: 400px;
+      padding: 28px 20px;
       border-radius: 20px;
       background: rgba(255, 255, 255, 0.019);
       backdrop-filter: blur(9px);
       -webkit-backdrop-filter: blur(9px);
       box-shadow: 0 14px 45px rgba(0, 0, 0, 0.65);
       animation: float 6s ease-in-out infinite;
+    }
+
+    @media (min-width: 480px) {
+      .box {
+        padding: 32px;
+        width: 90%;
+      }
+    }
+
+    @media (min-width: 768px) {
+      .box {
+        width: 330px;
+      }
     }
 
     @keyframes float {
@@ -97,22 +140,49 @@
 
     h2 {
       text-align: center;
-      margin-bottom: 22px;
+      margin-bottom: 24px;
       font-weight: 600;
       letter-spacing: 0.5px;
+      font-size: 24px;
+    }
+
+    @media (min-width: 768px) {
+      h2 {
+        margin-bottom: 22px;
+        font-size: 28px;
+      }
     }
 
     input {
       width: 100%;
-      padding: 12px 14px;
-      margin-top: 14px;
+      padding: 16px 18px;
+      margin-top: 16px;
       border-radius: 12px;
       border: none;
       background: rgba(255, 255, 255, 0.2);
       color: #fff;
-      font-size: 14px;
+      font-size: 16px;
       outline: none;
       transition: 0.3s;
+      -webkit-appearance: none;
+      appearance: none;
+      min-height: 50px;
+    }
+
+    /* Prevent zoom on iOS input focus */
+    @media screen and (max-width: 768px) {
+      input {
+        font-size: 16px !important;
+      }
+    }
+
+    @media (min-width: 768px) {
+      input {
+        padding: 12px 14px;
+        margin-top: 14px;
+        font-size: 14px;
+        min-height: auto;
+      }
     }
 
     input::placeholder {
@@ -126,15 +196,27 @@
 
     button {
       width: 100%;
-      padding: 13px;
-      margin-top: 20px;
+      padding: 16px;
+      margin-top: 24px;
       border-radius: 12px;
       border: none;
       cursor: pointer;
       font-weight: 600;
+      font-size: 16px;
       background: rgba(255, 255, 255, 0.25);
       color: #fff;
       transition: all 0.3s ease;
+      min-height: 52px;
+      touch-action: manipulation;
+    }
+
+    @media (min-width: 768px) {
+      button {
+        padding: 13px;
+        margin-top: 20px;
+        font-size: 14px;
+        min-height: auto;
+      }
     }
 
     button:hover {
@@ -143,11 +225,21 @@
     }
 
     .msg {
-      margin-top: 14px;
+      margin-top: 16px;
       text-align: center;
       font-size: 14px;
       color: #ffb3b3;
-      min-height: 18px;
+      min-height: 20px;
+      padding: 8px;
+      word-wrap: break-word;
+    }
+
+    @media (min-width: 768px) {
+      .msg {
+        margin-top: 14px;
+        min-height: 18px;
+        padding: 0;
+      }
     }
   </style>
 </head>
@@ -161,8 +253,8 @@
   <div class="box">
     <h2>Event Login</h2>
 
-    <input id="event_id" placeholder="Event ID">
-    <input id="event_pass" type="password" placeholder="Password">
+    <input id="event_id" type="text" placeholder="Event ID" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+    <input id="event_pass" type="password" placeholder="Password" autocomplete="current-password">
 
     <button onclick="login()">Login</button>
     <div class="msg" id="msg"></div>
