@@ -27,6 +27,8 @@ const DATABASE_ID = process.env.APPWRITE_DATABASE_ID;
 const COLLECTIONS = {
     EVENTS: process.env.APPWRITE_COLLECTION_EVENTS || 'events',
     TICKETS: process.env.APPWRITE_COLLECTION_TICKETS || 'tickets',
+    USERS: process.env.APPWRITE_COLLECTION_USERS || 'users',
+    ATTENDANCE: process.env.APPWRITE_COLLECTION_ATTENDANCE || 'attendance',
     COORDINATORS: process.env.APPWRITE_COLLECTION_COORDINATORS || 'event_coordinators'
 };
 
@@ -63,6 +65,21 @@ async function getTicketByIds(ticket_id, event_id) {
     }
 }
 
+// Helper function to get ticket by ticket_id only (to check if it belongs to different event)
+async function getTicketByTicketId(ticket_id) {
+    try {
+        const response = await databases.listDocuments(
+            DATABASE_ID,
+            COLLECTIONS.TICKETS,
+            [Query.equal('ticket_id', ticket_id)]
+        );
+        return response.documents.length > 0 ? response.documents[0] : null;
+    } catch (error) {
+        console.error('Error fetching ticket by ticket_id:', error);
+        throw error;
+    }
+}
+
 // Helper function to count tickets for an event
 async function countTicketsByEventId(event_id) {
     try {
@@ -93,7 +110,22 @@ async function getTicketsByEventId(event_id) {
     }
 }
 
-// Helper function to get attended tickets (usage = true)
+// Helper function to get user by stud_id
+async function getUserByStudId(stud_id) {
+    try {
+        const response = await databases.listDocuments(
+            DATABASE_ID,
+            COLLECTIONS.USERS,
+            [Query.equal('stud_id', stud_id)]
+        );
+        return response.documents.length > 0 ? response.documents[0] : null;
+    } catch (error) {
+        console.error('Error fetching user by stud_id:', error);
+        return null; // Return null if user not found or collection doesn't exist
+    }
+}
+
+// Helper function to get attended tickets (present = true)
 async function getAttendedTickets(event_id) {
     try {
         const response = await databases.listDocuments(
@@ -101,7 +133,7 @@ async function getAttendedTickets(event_id) {
             COLLECTIONS.TICKETS,
             [
                 Query.equal('event_id', event_id),
-                Query.equal('usage', true)
+                Query.equal('present', true)
             ]
         );
         return response.documents;
@@ -111,14 +143,14 @@ async function getAttendedTickets(event_id) {
     }
 }
 
-// Helper function to update ticket usage
+// Helper function to update ticket present status
 async function markTicketAsUsed(documentId) {
     try {
         const response = await databases.updateDocument(
             DATABASE_ID,
             COLLECTIONS.TICKETS,
             documentId,
-            { usage: true }
+            { present: true }
         );
         return response;
     } catch (error) {
@@ -179,6 +211,8 @@ module.exports = {
     COLLECTIONS,
     getEventByEventId,
     getTicketByIds,
+    getTicketByTicketId,
+    getUserByStudId,
     countTicketsByEventId,
     getTicketsByEventId,
     getAttendedTickets,

@@ -32,6 +32,82 @@
       margin-top: 20px;
       cursor: pointer;
     }
+
+    /* Popup Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      animation: fadeIn 0.3s;
+    }
+
+    .modal-content {
+      background-color: #fff;
+      margin: 15% auto;
+      padding: 30px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      animation: slideDown 0.3s;
+    }
+
+    .modal-header {
+      color: #e74c3c;
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 15px;
+    }
+
+    .modal-body {
+      color: #333;
+      font-size: 16px;
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    .modal-event-name {
+      color: #3498db;
+      font-weight: bold;
+      font-size: 18px;
+      margin-top: 10px;
+    }
+
+    .modal-close {
+      background-color: #e74c3c;
+      color: white;
+      padding: 12px 30px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    .modal-close:hover {
+      background-color: #c0392b;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideDown {
+      from {
+        transform: translateY(-50px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
   </style>
 </head>
 <body>
@@ -43,6 +119,18 @@
   <p id="result">Waiting for scan...</p>
 
   <button onclick="goBack()">⬅ Back to Dashboard</button>
+
+  <!-- Wrong Event Popup Modal -->
+  <div id="wrongEventModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">⚠️ Wrong Event</div>
+      <div class="modal-body">
+        You are in the wrong event!
+        <div class="modal-event-name" id="wrongEventName"></div>
+      </div>
+      <button class="modal-close" onclick="closeWrongEventPopup()">OK</button>
+    </div>
+  </div>
 
   <script>
   const event_id = localStorage.getItem("event_id");
@@ -107,8 +195,14 @@
         }, 1000);
 
       } else {
-        result.innerText = "❌ " + data.message;
-        result.style.color = "red";
+        // Check if it's a wrong event error
+        if (data.wrong_event && data.event_name) {
+          // Show popup for wrong event
+          showWrongEventPopup(data.event_name);
+        } else {
+          result.innerText = "❌ " + data.message;
+          result.style.color = "red";
+        }
 
         setTimeout(() => {
           isProcessing = false;
@@ -125,6 +219,32 @@
 
   function onScanFailure(error) {
     // ignore camera noise
+  }
+
+  function showWrongEventPopup(eventName) {
+    const modal = document.getElementById("wrongEventModal");
+    const eventNameEl = document.getElementById("wrongEventName");
+    eventNameEl.textContent = `This ticket is for: ${eventName}`;
+    modal.style.display = "block";
+    
+    // Stop scanner when popup is shown
+    html5QrCode.stop();
+  }
+
+  function closeWrongEventPopup() {
+    const modal = document.getElementById("wrongEventModal");
+    modal.style.display = "none";
+    isProcessing = false;
+    // Restart scanner after closing popup
+    startScanner();
+  }
+
+  // Close modal when clicking outside
+  window.onclick = function(event) {
+    const modal = document.getElementById("wrongEventModal");
+    if (event.target === modal) {
+      closeWrongEventPopup();
+    }
   }
 
   html5QrCode = new Html5Qrcode("reader");
