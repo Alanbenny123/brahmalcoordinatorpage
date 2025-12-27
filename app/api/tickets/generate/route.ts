@@ -1,20 +1,23 @@
 import { NextResponse } from "next/server";
+import { GenerateTicketSchema } from "@/lib/validations/schemas";
 import { ID } from "node-appwrite";
 import { backendDB } from "@/lib/appwrite/backend";
 
 export async function POST(req: Request) {
   try {
-    // 1️⃣ Read request body
-    const body = await req.json();
-    const { event_id, stud_ids } = body;
 
-    // 2️⃣ Basic validation
-    if (!event_id || !Array.isArray(stud_ids) || stud_ids.length === 0) {
+    // 1️⃣ Read request body
+    const json = await req.json();
+    const result = GenerateTicketSchema.safeParse(json);
+
+    if (!result.success) {
       return NextResponse.json(
-        { ok: false, error: "Invalid input data" },
+        { ok: false, error: (result.error as any).errors[0].message },
         { status: 400 }
       );
     }
+
+    const { event_id, stud_ids } = result.data;
 
     // 3️⃣ Create ticket document
     const ticket = await backendDB.createDocument(

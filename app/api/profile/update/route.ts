@@ -2,15 +2,27 @@ import { NextResponse } from "next/server";
 import { backendDB } from "@/lib/appwrite/backend";
 import { hashPassword } from "@/lib/hash";
 import { Models } from "appwrite";
+import { ProfileUpdateSchema } from "@/lib/validations/schemas"; // Assuming this path
 
 const DB_ID = process.env.APPWRITE_DATABASE_ID!;
 const COLLECTION = process.env.APPWRITE_USERS_COLLECTION_ID!;
 
 export async function POST(req: Request) {
   try {
-    const { id, name, email, password } = await req.json();
+    const json = await req.json();
+    const result = ProfileUpdateSchema.safeParse(json);
 
-    const updateData: Partial<Models.Document> = { name, email };
+    if (!result.success) {
+      return NextResponse.json(
+        { success: false, error: (result.error as any).errors[0].message },
+        { status: 400 }
+      );
+    }
+
+    // Explicitly destructure only allowed fields
+    const { id, name, email, password } = result.data;
+
+    const updateData: Record<string, any> = { name, email };
 
     if (password) {
       updateData.pass = await hashPassword(password);
@@ -19,7 +31,7 @@ export async function POST(req: Request) {
     const user = await backendDB.updateDocument(
       DB_ID,
       COLLECTION,
-      id,
+      json.id, // ID is still needed!
       updateData
     );
 
@@ -28,6 +40,6 @@ export async function POST(req: Request) {
       user: { id: user.$id, name: user.name, email: user.email },
     });
   } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message });
+    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
 }

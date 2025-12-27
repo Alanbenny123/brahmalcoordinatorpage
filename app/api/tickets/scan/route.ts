@@ -1,17 +1,21 @@
 import { NextResponse } from "next/server";
+import { ScanTicketSchema } from "@/lib/validations/schemas";
 import { backendDB } from "@/lib/appwrite/backend";
 import { Query } from "node-appwrite";
 
 export async function POST(req: Request) {
   try {
-    const { ticket_id, event_id } = await req.json();
+    const json = await req.json();
+    const result = ScanTicketSchema.safeParse(json);
 
-    if (!ticket_id || !event_id) {
+    if (!result.success) {
       return NextResponse.json(
-        { ok: false, error: "Missing ticket_id or event_id" },
+        { ok: false, error: (result.error as any).errors[0].message },
         { status: 400 }
       );
     }
+
+    const { ticket_id, event_id } = result.data;
 
     const ticket = await backendDB.getDocument(
       process.env.APPWRITE_DATABASE_ID!,

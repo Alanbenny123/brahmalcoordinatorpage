@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
+import { RegisterSchema } from "@/lib/validations/schemas";
 import { backendDB } from "@/lib/appwrite/backend";
 import { ID } from "node-appwrite";
 import { hashPassword } from "@/lib/hash";
-import { RegisterRequest, Student, StudentPublic, AuthResponse } from "@/lib/types";
+import { Student, StudentPublic } from "@/lib/types";
 
 // 👇 ensure these env values exist!
 const DB_ID = process.env.APPWRITE_DATABASE_ID!;
@@ -10,17 +11,32 @@ const COLLECTION = process.env.APPWRITE_USERS_COLLECTION_ID!;
 
 // convert Student -> safe response
 function toPublicUser(user: Student): StudentPublic {
-  return { id: user.$id, name: user.name, email: user.email };
+  return {
+    id: user.$id,
+    name: user.name,
+    email: user.email,
+    tickets: user.tickets || [],
+    certificates: user.certificates || []
+  };
 }
 
-export async function POST(req: Request): Promise<NextResponse<AuthResponse>> {
+export async function POST(req: Request) {
   try {
     console.log("📥 Incoming request");
-    const body = (await req.json()) as RegisterRequest;
+    const json = await req.json();
 
-    if (!body.name || !body.email || !body.password) {
-      return NextResponse.json({ success:false, error:"Missing fields" });
+    // Validate with Zod
+    const result = RegisterSchema.safeParse(json);
+
+    if (!result.success) {
+      console.log("Zod Error:", result.error);
+      return NextResponse.json(
+        { success: false, error: (result.error as any).errors?.[0]?.message || "Validation Error" },
+        { status: 400 }
+      );
     }
+
+    const body = result.data;
 
     console.log("🔐 Hashing password");
     const hashed = await hashPassword(body.password);
@@ -42,12 +58,12 @@ export async function POST(req: Request): Promise<NextResponse<AuthResponse>> {
     console.log("✅ Registered:", user.$id);
 
     return NextResponse.json({
-      success:true,
+      success: true,
       user: toPublicUser(user)
     });
 
-  } catch (err:any) {
+  } catch (err: any) {
     console.error("❌ Register Error:", err.message);
-    return NextResponse.json({ success:false, error:err.message });
+    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
 }

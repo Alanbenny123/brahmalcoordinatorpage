@@ -26,6 +26,8 @@ export interface StudentPublic {
   id: string;
   name: string;
   email: string;
+  certificates?: string[];
+  tickets?: string[];
 }
 
 export interface RegisterRequest {
