@@ -6,8 +6,28 @@ import { Loader2, UserPlus } from "lucide-react";
 export default function RegisterPage() {
   const [data, setData] = useState({ name: "", email: "", password: "" });
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({ name: "", email: "", password: "", global: "" });
 
   async function handleSubmit() {
+    setErrors({ name: "", email: "", password: "", global: "" });
+
+    // Inline client-side checks so the user sees which field failed
+    const nextErrors = { name: "", email: "", password: "", global: "" };
+    if (!data.name.trim()) nextErrors.name = "Name is required";
+    if (data.name.trim().length > 0 && data.name.trim().length < 2) {
+      nextErrors.name = "Name must be at least 2 characters";
+    }
+    if (!data.email.trim()) nextErrors.email = "Email is required";
+    if (!data.password.trim()) nextErrors.password = "Password is required";
+    if (data.password.trim().length > 0 && data.password.trim().length < 6) {
+      nextErrors.password = "Password must be at least 6 characters";
+    }
+    const hasLocalErrors = Object.values(nextErrors).some(Boolean);
+    if (hasLocalErrors) {
+      setErrors(nextErrors);
+      return;
+    }
+
     setLoading(true);
     const res = await fetch("/api/auth/register", {
       method: "POST",
@@ -21,7 +41,15 @@ export default function RegisterPage() {
     if (result.success) {
       // alert("Registration successful ✔"); // Removed alert
       window.location.href = "/login";
-    } else alert(result.error);
+    } else {
+      const message = result.error || "Validation Error";
+      const lowered = String(message).toLowerCase();
+
+      if (lowered.includes("name")) setErrors(err => ({ ...err, name: message }));
+      else if (lowered.includes("email")) setErrors(err => ({ ...err, email: message }));
+      else if (lowered.includes("password")) setErrors(err => ({ ...err, password: message }));
+      else setErrors(err => ({ ...err, global: message }));
+    }
   }
 
   return (
@@ -52,6 +80,7 @@ export default function RegisterPage() {
               value={data.name}
               onChange={e => setData({ ...data, name: e.target.value })}
             />
+            {errors.name && <p className="text-sm text-rose-400">{errors.name}</p>}
           </div>
 
           <div className="space-y-2">
@@ -63,6 +92,7 @@ export default function RegisterPage() {
               value={data.email}
               onChange={e => setData({ ...data, email: e.target.value })}
             />
+            {errors.email && <p className="text-sm text-rose-400">{errors.email}</p>}
           </div>
 
           <div className="space-y-2">
@@ -74,8 +104,11 @@ export default function RegisterPage() {
               value={data.password}
               onChange={e => setData({ ...data, password: e.target.value })}
             />
+            {errors.password && <p className="text-sm text-rose-400">{errors.password}</p>}
           </div>
         </div>
+
+        {errors.global && <p className="text-sm text-rose-400 text-center">{errors.global}</p>}
 
         <button
           className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2"

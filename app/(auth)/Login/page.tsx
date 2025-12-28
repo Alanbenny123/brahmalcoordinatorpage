@@ -6,8 +6,24 @@ import { Loader2, LogIn } from "lucide-react";
 export default function LoginPage() {
   const [data, setData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({ email: "", password: "", global: "" });
 
   async function handleLogin() {
+    setErrors({ email: "", password: "", global: "" });
+
+    // Quick client-side guardrails so the user sees the error near the field
+    const nextErrors = { email: "", password: "", global: "" };
+    if (!data.email.trim()) nextErrors.email = "Email is required";
+    if (!data.password.trim()) nextErrors.password = "Password is required";
+    if (data.password.trim().length > 0 && data.password.trim().length < 6) {
+      nextErrors.password = "Password must be at least 6 characters";
+    }
+    const hasLocalErrors = Object.values(nextErrors).some(Boolean);
+    if (hasLocalErrors) {
+      setErrors(nextErrors);
+      return;
+    }
+
     setLoading(true);
     const res = await fetch("/api/auth/login", {
       method: "POST",
@@ -22,7 +38,14 @@ export default function LoginPage() {
       localStorage.setItem("user", JSON.stringify(result.user));
       // alert("Login Successful ✔"); // Removed alert for smoother UX
       window.location.href = "/profile";
-    } else alert(result.message || result.error);
+    } else {
+      const message = result.message || result.error || "Validation Error";
+      const lowered = String(message).toLowerCase();
+
+      if (lowered.includes("email")) setErrors(err => ({ ...err, email: message }));
+      else if (lowered.includes("password")) setErrors(err => ({ ...err, password: message }));
+      else setErrors(err => ({ ...err, global: message }));
+    }
   }
 
   return (
@@ -52,6 +75,7 @@ export default function LoginPage() {
               value={data.email}
               onChange={e => setData({ ...data, email: e.target.value })}
             />
+            {errors.email && <p className="text-sm text-rose-400">{errors.email}</p>}
           </div>
 
           <div className="space-y-2">
@@ -63,8 +87,11 @@ export default function LoginPage() {
               value={data.password}
               onChange={e => setData({ ...data, password: e.target.value })}
             />
+            {errors.password && <p className="text-sm text-rose-400">{errors.password}</p>}
           </div>
         </div>
+
+        {errors.global && <p className="text-sm text-rose-400 text-center">{errors.global}</p>}
 
         <button
           className="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2"

@@ -35,7 +35,8 @@ export async function POST(req: Request) {
     // Log 1: Input
     console.log("Login Input:", body);
 
-    const { email, password } = result.data;
+    const email = result.data.email.trim().toLowerCase();
+    const password = result.data.password;
     console.log("Login Parsed Email:", email);
 
     const userList = await backendDB.listDocuments<Student>(

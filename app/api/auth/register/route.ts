@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { RegisterSchema } from "@/lib/validations/schemas";
 import { backendDB } from "@/lib/appwrite/backend";
-import { ID } from "node-appwrite";
+import { ID, Query } from "node-appwrite";
 import { hashPassword } from "@/lib/hash";
 import { Student, StudentPublic } from "@/lib/types";
 
@@ -38,6 +38,21 @@ export async function POST(req: Request) {
 
     const body = result.data;
 
+    // Normalize and check for duplicates before creating
+    const email = body.email.trim().toLowerCase();
+    const existing = await backendDB.listDocuments<Student>(
+      DB_ID,
+      COLLECTION,
+      [Query.equal("email", email)]
+    );
+
+    if (existing.total > 0) {
+      return NextResponse.json(
+        { success: false, error: "Email already registered" },
+        { status: 409 }
+      );
+    }
+
     console.log("🔐 Hashing password");
     const hashed = await hashPassword(body.password);
 
@@ -48,7 +63,7 @@ export async function POST(req: Request) {
       ID.unique(),
       {
         name: body.name,
-        email: body.email,
+        email,
         pass: hashed,
         certificates: [],
         tickets: []
