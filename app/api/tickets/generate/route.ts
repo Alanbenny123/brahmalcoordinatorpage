@@ -31,24 +31,7 @@ export async function POST(req: Request) {
       }
     );
 
-    // 4️⃣ Create attendance entries (one per user)
-    const attendancePromises = stud_ids.map((user_id: string) => {
-      return backendDB.createDocument(
-        process.env.APPWRITE_DATABASE_ID!,
-        process.env.APPWRITE_ATTENDANCE_COLLECTION_ID!,
-        ID.unique(),
-        {
-          event_id,
-          ticket_id: ticket.$id,
-          stud_id: user_id,
-          present: false,
-        }
-      );
-    });
-
-    await Promise.all(attendancePromises);
-
-    // 5️⃣ Add ticket ID to each user's tickets[] array
+    // 4️⃣ Add ticket ID to each user's tickets[] array
     const userUpdatePromises = stud_ids.map(async (user_id: string) => {
       // Fetch user document
       const userDoc = await backendDB.getDocument(

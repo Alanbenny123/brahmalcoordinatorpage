@@ -30,16 +30,29 @@ export async function POST(req: Request) {
       );
     }
 
-    const attendance = await backendDB.listDocuments(
-      process.env.APPWRITE_DATABASE_ID!,
-      process.env.APPWRITE_ATTENDANCE_COLLECTION_ID!,
-      [Query.equal("ticket_id", ticket_id)]
-    );
+    // Get stud_ids from the ticket (stored as stud_id in the ticket document)
+    const studIds: string[] = ticket.stud_id || [];
 
-    const members = attendance.documents.map((doc) => ({
-      stud_id: doc.stud_id,
-      present: doc.present,
-    }));
+    // Check attendance for each student
+    const members = await Promise.all(
+      studIds.map(async (stud_id: string) => {
+        const attendance = await backendDB.listDocuments(
+          process.env.APPWRITE_DATABASE_ID!,
+          process.env.APPWRITE_ATTENDANCE_COLLECTION_ID!,
+          [
+            Query.equal("stud_id", stud_id),
+            Query.equal("ticket_id", ticket_id),
+            Query.equal("event_id", event_id),
+          ]
+        );
+
+        // If a record exists, the student is present
+        return {
+          stud_id,
+          present: attendance.documents.length > 0,
+        };
+      })
+    );
 
     return NextResponse.json({
       ok: true,
