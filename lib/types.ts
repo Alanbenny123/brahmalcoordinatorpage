@@ -48,3 +48,21 @@ export interface AuthResponse {
   message?: string;
   error?: string;
 }
+
+
+export interface EventDocument {
+  $id: string;
+  event_name: string;
+  category: string;
+  venue: string;
+  date: string;
+  brahma_poster?: string;  
+  completed: boolean;
+  amount: number;
+}
+
+export interface FetchResponse {
+  data: EventDocument[];
+  total: number;
+  totalPages: number;
+}
