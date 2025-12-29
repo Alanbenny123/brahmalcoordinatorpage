@@ -56,6 +56,10 @@ export interface EventDocument {
   category: string;
   venue: string;
   date: string;
+  time: string;
+  details: string;
+  coordinators: string[];
+  phone_number: string[];
   brahma_poster?: string;  
   completed: boolean;
   amount: number;
