@@ -2,6 +2,10 @@
 
 > A comprehensive event management system for ASIET's Brahma Fest, built with Node.js, React, Appwrite, and Firebase.
 
+## Contributors
+
+This project is maintained by the Brahma Fest team.
+
 [![React](https://img.shields.io/badge/React-18+-61DAFB?logo=react&logoColor=white)](https://reactjs.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-18+-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
 [![Appwrite](https://img.shields.io/badge/Appwrite-Database-F02E65?logo=appwrite&logoColor=white)](https://appwrite.io/)
@@ -70,7 +74,6 @@ The **Brahma Fest Event Coordinator System** is a full-stack web application des
 - Store in Firebase Storage
 - Download and share functionality
 
----
 
 ## 🛠️ Tech Stack
 
@@ -507,7 +510,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 For support, email brahma.tech@asiet.ac.in or join our Slack channel.
 
----
+--
 
 ## 🙏 Acknowledgments
 
@@ -516,6 +519,6 @@ For support, email brahma.tech@asiet.ac.in or join our Slack channel.
 - Firebase for reliable storage solutions
 - All contributors and coordinators
 
----
+--
 
 **Made with ❤️ for Brahma Fest 2025**
