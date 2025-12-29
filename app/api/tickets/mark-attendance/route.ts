@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { MarkAttendanceSchema } from "@/lib/validations/schemas";
 import { backendDB } from "@/lib/appwrite/backend";
-import { Query } from "node-appwrite";
+import { ID, Query } from "node-appwrite";
 
 export async function POST(req: Request) {
   try {
@@ -32,27 +32,19 @@ export async function POST(req: Request) {
       );
     }
 
-    // 4️⃣ Fetch attendance record for this user
+    // 4️⃣ Check if attendance record already exists
     const attendanceRes = await backendDB.listDocuments(
       process.env.APPWRITE_DATABASE_ID!,
       process.env.APPWRITE_ATTENDANCE_COLLECTION_ID!,
       [
         Query.equal("ticket_id", ticket_id),
         Query.equal("stud_id", stud_id),
+        Query.equal("event_id", event_id),
       ]
     );
 
-    if (attendanceRes.total === 0) {
-      return NextResponse.json(
-        { ok: false, error: "Attendance record not found" },
-        { status: 404 }
-      );
-    }
-
-    const attendanceDoc = attendanceRes.documents[0];
-
-    // 5️⃣ Prevent double marking
-    if (attendanceDoc.present === true) {
+    // 5️⃣ If record exists, already marked present
+    if (attendanceRes.total > 0) {
       return NextResponse.json({
         ok: true,
         message: "Already marked present",
@@ -60,13 +52,15 @@ export async function POST(req: Request) {
       });
     }
 
-    // 6️⃣ Update attendance
-    await backendDB.updateDocument(
+    // 6️⃣ Create new attendance record
+    await backendDB.createDocument(
       process.env.APPWRITE_DATABASE_ID!,
       process.env.APPWRITE_ATTENDANCE_COLLECTION_ID!,
-      attendanceDoc.$id,
+      ID.unique(),
       {
-        present: true,
+        event_id,
+        ticket_id,
+        stud_id,
       }
     );
 
