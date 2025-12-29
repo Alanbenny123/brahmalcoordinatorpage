@@ -1,18 +1,21 @@
 import { NextResponse } from "next/server";
+import { CloseTicketSchema } from "@/lib/validations/schemas";
 import { backendDB } from "@/lib/appwrite/backend";
 import { Query } from "node-appwrite";
 
 export async function POST(req: Request) {
   try {
-    const { event_id } = await req.json();
+    const json = await req.json();
+    const result = CloseTicketSchema.safeParse(json);
 
-    // 1️⃣ Validate input
-    if (!event_id) {
+    if (!result.success) {
       return NextResponse.json(
-        { ok: false, error: "Missing event_id" },
+        { ok: false, error: (result.error as any).errors[0].message },
         { status: 400 }
       );
     }
+
+    const { event_id } = result.data;
 
     // 2️⃣ Fetch event
     const event = await backendDB.getDocument(

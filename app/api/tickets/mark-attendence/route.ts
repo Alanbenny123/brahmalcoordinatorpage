@@ -1,18 +1,21 @@
 import { NextResponse } from "next/server";
+import { MarkAttendanceSchema } from "@/lib/validations/schemas";
 import { backendDB } from "@/lib/appwrite/backend";
 import { Query } from "node-appwrite";
 
 export async function POST(req: Request) {
   try {
-    const { ticket_id, stud_id, event_id } = await req.json();
+    const json = await req.json();
+    const result = MarkAttendanceSchema.safeParse(json);
 
-    // 1️⃣ Validate input
-    if (!ticket_id || !stud_id || !event_id) {
+    if (!result.success) {
       return NextResponse.json(
-        { ok: false, error: "Missing ticket_id, stud_id, or event_id" },
+        { ok: false, error: (result.error as any).errors[0].message },
         { status: 400 }
       );
     }
+
+    const { ticket_id, stud_id, event_id } = result.data;
 
     // 2️⃣ Fetch ticket
     const ticket = await backendDB.getDocument(
