@@ -1,6 +1,6 @@
 # 🎓 Brahma Fest - Event Coordinator System
 
-> A comprehensive event management system for ASIET's Brahma Fest, built with Node.js, React, Appwrite, and Firebase.
+> A comprehensive event management system for ASIET's Brahma Fest, built with Node.js, Express, Appwrite, and Firebase.
 
 [![React](https://img.shields.io/badge/React-18+-61DAFB?logo=react&logoColor=white)](https://reactjs.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-18+-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
