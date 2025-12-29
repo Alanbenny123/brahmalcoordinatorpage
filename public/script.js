@@ -2,17 +2,17 @@
    DASHBOARD / SCAN / ATTENDANCE SCRIPT
    ====================== */
 
-/* Get current event_id from localStorage */
-const event_id = localStorage.getItem("event_id");
+/* Get current Event_Id from localStorage */
+const Event_Id = localStorage.getItem("Event_Id");
 
 /* ----------------------
    DASHBOARD COUNT
 ---------------------- */
 if (document.getElementById("count")) {
-  if (!event_id) {
+  if (!Event_Id) {
     document.getElementById("count").innerText = "Login again";
   } else {
-    fetch(`/count/${event_id}`)
+    fetch(`/count/${Event_Id}`)
       .then(res => res.json())
       .then(data => {
         document.getElementById("count").innerText = data.count;
@@ -36,7 +36,7 @@ function scanTicket() {
     return;
   }
 
-  if (!event_id) {
+  if (!Event_Id) {
     result.innerText = "Session expired. Login again.";
     return;
   }
@@ -50,7 +50,7 @@ function scanTicket() {
     },
     body: JSON.stringify({
       ticket_id: ticket_id,
-      event_id: event_id
+      Event_Id: Event_Id
     })
   })
     .then(res => res.json())
@@ -71,9 +71,9 @@ function scanTicket() {
    ATTENDANCE LIST
 ---------------------- */
 if (document.getElementById("attendance_list")) {
-  if (!event_id) return;
+  if (!Event_Id) return;
 
-  fetch(`/attendance/${event_id}`)
+  fetch(`/attendance/${Event_Id}`)
     .then(res => res.json())
     .then(data => {
       const ul = document.getElementById("attendance_list");

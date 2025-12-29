@@ -7,25 +7,58 @@ function login() {
     return;
   }
 
+  // Show loading state
+  const msgEl = document.getElementById("msg");
+  msgEl.style.color = "#fff";
+  msgEl.innerText = "Logging in...";
+
   fetch("/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ event_id, event_pass })
   })
-  .then(res => res.json())
+  .then(async res => {
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`HTTP ${res.status}: ${errorText}`);
+    }
+    return res.json();
+  })
   .then(data => {
     if (data.success) {
-
-      // ✅ STORE VALUES FROM SERVER (IMPORTANT)
-      localStorage.setItem("event_id", data.event_id || event_id);
+      // ✅ STORE VALUES FROM SERVER
+      localStorage.setItem("event_id", event_id);
       localStorage.setItem("event_name", data.event_name);
+      if (data.amount) {
+        localStorage.setItem("event_amount", data.amount);
+      }
 
-      window.location.href = "dashboard.html";
+      msgEl.style.color = "#90EE90";
+      msgEl.innerText = "Login successful!";
+      
+      setTimeout(() => {
+        window.location.href = "dashboard.html";
+      }, 500);
     } else {
-      document.getElementById("msg").innerText = data.message;
+      msgEl.style.color = "#ffb3b3";
+      msgEl.innerText = data.message || "Login failed";
     }
   })
-  .catch(() => {
-    document.getElementById("msg").innerText = "Server error";
+  .catch(err => {
+    console.error("Login error:", err);
+    msgEl.style.color = "#ffb3b3";
+    msgEl.innerText = err.message || "Server error";
   });
 }
+
+// Allow Enter key to submit
+document.addEventListener('DOMContentLoaded', () => {
+  const inputs = document.querySelectorAll('input');
+  inputs.forEach(input => {
+    input.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        login();
+      }
+    });
+  });
+});

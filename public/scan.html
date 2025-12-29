@@ -2,196 +2,38 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Scan Ticket</title>
 
+  <!-- Auth Check -->
+  <script src="auth.js"></script>
+  
   <!-- QR Scanner Library -->
   <script src="https://unpkg.com/html5-qrcode"></script>
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
-
     body {
       font-family: Arial, sans-serif;
-      padding: 15px;
+      padding: 20px;
       text-align: center;
-      background: #0b0f14;
-      color: #eaeaea;
-      margin: 0;
-      min-height: 100vh;
-    }
-
-    h2 {
-      color: #eaeaea;
-      margin-bottom: 20px;
-      font-size: 20px;
-    }
-
-    @media (min-width: 768px) {
-      body {
-        padding: 20px;
-      }
-      h2 {
-        font-size: 24px;
-      }
+      background: #f4f4f4;
     }
 
     #reader {
-      width: 100%;
-      max-width: 400px;
-      margin: 20px auto;
+      width: 300px;
+      margin: auto;
     }
 
     #result {
       margin-top: 20px;
-      font-size: 16px;
+      font-size: 18px;
       font-weight: bold;
-      padding: 10px;
-      min-height: 50px;
-    }
-
-    @media (min-width: 768px) {
-      #result {
-        font-size: 18px;
-      }
     }
 
     button {
-      padding: 12px 24px;
+      padding: 10px 15px;
       font-size: 16px;
       margin-top: 20px;
       cursor: pointer;
-      border: 1px solid #333;
-      background: #121821;
-      color: #ddd;
-      border-radius: 6px;
-      width: 100%;
-      max-width: 300px;
-      transition: all 0.3s ease;
-    }
-
-    button:hover {
-      background: #1f2937;
-      border-color: #444;
-    }
-
-    @media (min-width: 480px) {
-      button {
-        width: auto;
-      }
-    }
-
-    /* Popup Modal Styles */
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 1000;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.7);
-      animation: fadeIn 0.3s;
-    }
-
-    .modal-content {
-      background-color: #121821;
-      margin: 20% auto;
-      padding: 25px;
-      border-radius: 10px;
-      width: 90%;
-      max-width: 400px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-      animation: slideDown 0.3s;
-      border: 1px solid #222;
-    }
-
-    @media (min-width: 768px) {
-      .modal-content {
-        margin: 15% auto;
-        padding: 30px;
-      }
-    }
-
-    .modal-header {
-      color: #e74c3c;
-      font-size: 20px;
-      font-weight: bold;
-      margin-bottom: 15px;
-    }
-
-    @media (min-width: 768px) {
-      .modal-header {
-        font-size: 24px;
-      }
-    }
-
-    .modal-body {
-      color: #eaeaea;
-      font-size: 14px;
-      margin-bottom: 20px;
-      line-height: 1.6;
-    }
-
-    @media (min-width: 768px) {
-      .modal-body {
-        font-size: 16px;
-      }
-    }
-
-    .modal-event-name {
-      color: #07fac5;
-      font-weight: bold;
-      font-size: 16px;
-      margin-top: 10px;
-    }
-
-    @media (min-width: 768px) {
-      .modal-event-name {
-        font-size: 18px;
-      }
-    }
-
-    .modal-close {
-      background-color: #e74c3c;
-      color: white;
-      padding: 12px 30px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: bold;
-      width: 100%;
-      transition: background-color 0.3s ease;
-    }
-
-    @media (min-width: 480px) {
-      .modal-close {
-        width: auto;
-        font-size: 16px;
-      }
-    }
-
-    .modal-close:hover {
-      background-color: #c0392b;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
-    @keyframes slideDown {
-      from {
-        transform: translateY(-50px);
-        opacity: 0;
-      }
-      to {
-        transform: translateY(0);
-        opacity: 1;
-      }
     }
   </style>
 </head>
@@ -205,29 +47,19 @@
 
   <button onclick="goBack()">⬅ Back to Dashboard</button>
 
-  <!-- Wrong Event Popup Modal -->
-  <div id="wrongEventModal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">⚠️ Wrong Event</div>
-      <div class="modal-body">
-        You are in the wrong event!
-        <div class="modal-event-name" id="wrongEventName"></div>
-      </div>
-      <button class="modal-close" onclick="closeWrongEventPopup()">OK</button>
-    </div>
-  </div>
-
   <script>
+  // Check authentication immediately
   const event_id = localStorage.getItem("event_id");
-  const result = document.getElementById("result");
+  
+  if (!event_id) {
+    alert("Please login first");
+    window.location.href = "login.html";
+    throw new Error("Not authenticated");
+  }
 
+  const result = document.getElementById("result");
   let isProcessing = false;
   let html5QrCode;
-
-  if (!event_id) {
-    result.innerText = "Session expired. Login again.";
-    result.style.color = "red";
-  }
 
   function goBack() {
     window.location.href = "dashboard.html";
@@ -280,14 +112,8 @@
         }, 1000);
 
       } else {
-        // Check if it's a wrong event error
-        if (data.wrong_event && data.event_name) {
-          // Show popup for wrong event
-          showWrongEventPopup(data.event_name);
-        } else {
-          result.innerText = "❌ " + data.message;
-          result.style.color = "red";
-        }
+        result.innerText = "❌ " + data.message;
+        result.style.color = "red";
 
         setTimeout(() => {
           isProcessing = false;
@@ -304,32 +130,6 @@
 
   function onScanFailure(error) {
     // ignore camera noise
-  }
-
-  function showWrongEventPopup(eventName) {
-    const modal = document.getElementById("wrongEventModal");
-    const eventNameEl = document.getElementById("wrongEventName");
-    eventNameEl.textContent = `This ticket is for: ${eventName}`;
-    modal.style.display = "block";
-    
-    // Stop scanner when popup is shown
-    html5QrCode.stop();
-  }
-
-  function closeWrongEventPopup() {
-    const modal = document.getElementById("wrongEventModal");
-    modal.style.display = "none";
-    isProcessing = false;
-    // Restart scanner after closing popup
-    startScanner();
-  }
-
-  // Close modal when clicking outside
-  window.onclick = function(event) {
-    const modal = document.getElementById("wrongEventModal");
-    if (event.target === modal) {
-      closeWrongEventPopup();
-    }
   }
 
   html5QrCode = new Html5Qrcode("reader");

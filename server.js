@@ -5,14 +5,10 @@ const path = require("path");
 const {
   getEventByEventId,
   getTicketByIds,
-  getTicketByTicketId,
-  getUserByStudId,
   countTicketsByEventId,
   getTicketsByEventId,
   getAttendedTickets,
-  markTicketAsUsed,
-  getCoordinatorsByEventId,
-  getEventsByCoordinator
+  markTicketAsUsed
 } = require("./appwrite");
 
 const app = express();
@@ -20,9 +16,39 @@ const app = express();
 /* =======================
    MIDDLEWARE
    ======================= */
+// CORS
 app.use(cors());
-app.use(bodyParser.json());
+
+// Body parser with size limits
+app.use(bodyParser.json({ limit: '10mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
+
+// Request logging middleware
+app.use((req, res, next) => {
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] ${req.method} ${req.url}`);
+  next();
+});
+
+// Security headers
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  next();
+});
+
+// Static files
 app.use(express.static("public"));
+
+// Error handling for JSON parsing
+app.use((err, req, res, next) => {
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    console.error('Bad JSON:', err.message);
+    return res.status(400).json({ success: false, message: 'Invalid JSON' });
+  }
+  next(err);
+});
 
 /* =======================
    ROOT ROUTE
@@ -62,25 +88,10 @@ app.post("/login", async (req, res) => {
       });
     }
 
-    // Get coordinators for this event
-    const coordinators = await getCoordinatorsByEventId(event_id);
-    
-    // Generate UUID session token
-    const { v4: uuidv4 } = require('uuid');
-    const sessionToken = uuidv4();
-    
     res.json({
       success: true,
-      event_id: event.event_id,
-      event_name: event.event_name || event.name || event.eventName,
-      coordinators: coordinators,
-      session_token: sessionToken,
-      event_data: {
-        venue: event.venue || '',
-        date: event.date || '',
-        time: event.time || '',
-        status: event.completed ? 'completed' : (event.date && new Date(event.date) > new Date() ? 'upcoming' : 'live')
-      }
+      event_name: event.event_name,
+      amount: event.amount || null
     });
 
   } catch (error) {
@@ -127,49 +138,30 @@ app.post("/scan", async (req, res) => {
       });
     }
 
-    // First, check if ticket exists at all (by ticket_id only)
-    const ticketAnyEvent = await getTicketByTicketId(ticket_id);
+    // Query tickets collection using Appwrite
+    const ticket = await getTicketByIds(ticket_id, event_id);
 
-    if (!ticketAnyEvent) {
+    if (!ticket) {
       return res.json({
         success: false,
-        message: "Ticket does not exist"
+        message: "Ticket does not belong to this event or does not exist"
       });
     }
 
-    // Check if ticket belongs to a different event
-    if (ticketAnyEvent.event_id !== event_id) {
-      // Get the event name for the ticket's actual event
-      const actualEvent = await getEventByEventId(ticketAnyEvent.event_id);
-      const eventName = actualEvent ? (actualEvent.event_name || actualEvent.name || "Unknown Event") : "Unknown Event";
-      
-      return res.json({
-        success: false,
-        message: "You are in the wrong event",
-        wrong_event: true,
-        event_name: eventName
-      });
-    }
-
-    // Ticket belongs to this event, check if already used
-    if (ticketAnyEvent.present === true) {
+    if (ticket.usage === true) {
       return res.json({
         success: false,
         message: "Ticket already used"
       });
     }
 
-    // Get user details for student name
-    const user = await getUserByStudId(ticketAnyEvent.stud_id);
-    const studentName = user ? (user.name || user.student_name || ticketAnyEvent.stud_id) : ticketAnyEvent.stud_id;
-
     // Mark ticket as used
-    await markTicketAsUsed(ticketAnyEvent.$id);
+    await markTicketAsUsed(ticket.$id);
 
     res.json({
       success: true,
       message: "Attendance marked",
-      student_name: studentName
+      student_name: ticket.student_name
     });
 
   } catch (error) {
@@ -191,13 +183,10 @@ app.get("/attendance/:event_id", async (req, res) => {
 
     const tickets = await getAttendedTickets(event_id);
 
-    // Fetch user details for each ticket
-    const students = await Promise.all(
-      tickets.map(async (ticket) => {
-        const user = await getUserByStudId(ticket.stud_id);
-        return user ? (user.name || user.student_name || ticket.stud_id) : ticket.stud_id;
-      })
-    );
+    let students = [];
+    tickets.forEach(ticket => {
+      students.push(ticket.student_name);
+    });
 
     res.json(students);
 
@@ -228,113 +217,11 @@ app.get("/tickets/:event_id", async (req, res) => {
 });
 
 /* =======================
-   DASHBOARD STATS
-   ======================= */
-app.get("/dashboard/:event_id", async (req, res) => {
-  try {
-    const { event_id } = req.params;
-
-    // Get all tickets for this event
-    const allTickets = await getTicketsByEventId(event_id);
-    
-    // Get checked-in tickets (present = true)
-    const checkedInTickets = allTickets.filter(t => t.present === true);
-    
-    // Get not checked-in tickets (present = false or undefined)
-    const notCheckedInTickets = allTickets.filter(t => !t.present || t.present === false);
-
-    // Fetch user details for all tickets
-    const checkedInParticipants = await Promise.all(
-      checkedInTickets.map(async (ticket) => {
-        const user = await getUserByStudId(ticket.stud_id);
-        return {
-          name: user ? (user.name || user.student_name || ticket.stud_id) : ticket.stud_id,
-          phone: user ? (user.phone || user.phone_number || "N/A") : "N/A"
-        };
-      })
-    );
-
-    const notCheckedInParticipants = await Promise.all(
-      notCheckedInTickets.map(async (ticket) => {
-        const user = await getUserByStudId(ticket.stud_id);
-        return {
-          name: user ? (user.name || user.student_name || ticket.stud_id) : ticket.stud_id,
-          phone: user ? (user.phone || user.phone_number || "N/A") : "N/A"
-        };
-      })
-    );
-
-    res.json({
-      success: true,
-      total: allTickets.length,
-      checked_in: {
-        count: checkedInTickets.length,
-        participants: checkedInParticipants
-      },
-      not_checked_in: {
-        count: notCheckedInTickets.length,
-        participants: notCheckedInParticipants
-      }
-    });
-
-  } catch (error) {
-    console.error("DASHBOARD STATS ERROR:", error);
-    const errorMessage = error.message || "Server error";
-    res.status(500).json({
-      success: false,
-      message: process.env.NODE_ENV === 'development' ? errorMessage : "Server error"
-    });
-  }
-});
-
-/* =======================
-   GET ASSIGNED EVENTS FOR COORDINATOR
-   ======================= */
-app.get("/coord/events", async (req, res) => {
-  try {
-    const { coordinator_name } = req.query;
-    
-    if (!coordinator_name) {
-      return res.status(400).json({
-        success: false,
-        message: "Coordinator name is required"
-      });
-    }
-
-    // Get all events where coordinator[] array contains this coordinator
-    const events = await getEventsByCoordinator(coordinator_name);
-    
-    // Format events for mobile UI
-    const formattedEvents = events.map(event => ({
-      $id: event.$id,
-      event_id: event.event_id,
-      event_name: event.event_name || event.name || event.eventName,
-      venue: event.venue || '',
-      date: event.date || '',
-      time: event.time || '',
-      status: event.completed ? 'completed' : 
-              (event.date && new Date(event.date) > new Date() ? 'upcoming' : 'live'),
-      poster: event.poster || null
-    }));
-
-    res.json({
-      success: true,
-      events: formattedEvents
-    });
-
-  } catch (error) {
-    console.error("COORD EVENTS ERROR:", error);
-    const errorMessage = error.message || "Server error";
-    res.status(500).json({
-      success: false,
-      message: process.env.NODE_ENV === 'development' ? errorMessage : "Server error"
-    });
-  }
-});
-
-/* =======================
    START SERVER
    ======================= */
-app.listen(3000, () => {
+const PORT = 3000;
+const HOST = '0.0.0.0'; // Listen on all network interfaces
+
+app.listen(PORT, HOST, () => {
   console.log("✅ Server running at http://localhost:3000");
 });
