@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { RegisterSchema } from "@/lib/validations/schemas";
-import { backendDB } from "@/lib/appwrite/backend";
+import { backendDB } from "@/lib/appwrite/server";
 import { ID, Query } from "node-appwrite";
 import { hashPassword } from "@/lib/hash";
 import { Student, StudentPublic } from "@/lib/types";

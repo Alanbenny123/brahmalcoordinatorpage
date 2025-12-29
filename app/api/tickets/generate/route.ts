@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { GenerateTicketSchema } from "@/lib/validations/schemas";
 import { ID } from "node-appwrite";
-import { backendDB } from "@/lib/appwrite/backend";
+import { backendDB } from "@/lib/appwrite/server";
 
 export async function POST(req: Request) {
   try {

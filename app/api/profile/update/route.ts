@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { backendDB } from "@/lib/appwrite/backend";
+import { backendDB } from "@/lib/appwrite/server";
 import { hashPassword } from "@/lib/hash";
 import { Models } from "appwrite";
 import { ProfileUpdateSchema } from "@/lib/validations/schemas"; // Assuming this path

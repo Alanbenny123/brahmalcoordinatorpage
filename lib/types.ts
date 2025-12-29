@@ -48,3 +48,18 @@ export interface AuthResponse {
   message?: string;
   error?: string;
 }
+
+// Coordinator types
+export interface Coordinator extends Models.Document {
+  name: string;
+  email: string;
+  pass: string;
+  event_id: string; // The event this coordinator is assigned to
+}
+
+export interface CoordinatorPublic {
+  id: string;
+  name: string;
+  email: string;
+  event_id: string;
+}

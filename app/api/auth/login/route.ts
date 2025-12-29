@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { LoginSchema } from "@/lib/validations/schemas";
-import { backendDB } from "@/lib/appwrite/backend";
+import { backendDB } from "@/lib/appwrite/server";
 import { Query } from "node-appwrite";
 import { verifyPassword } from "@/lib/hash";
 import crypto from "crypto";

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { ScanTicketSchema } from "@/lib/validations/schemas";
-import { backendDB } from "@/lib/appwrite/backend";
+import { backendDB } from "@/lib/appwrite/server";
 import { Query } from "node-appwrite";
 
 export async function POST(req: Request) {
@@ -17,11 +17,20 @@ export async function POST(req: Request) {
 
     const { ticket_id, event_id } = result.data;
 
-    const ticket = await backendDB.getDocument(
-      process.env.APPWRITE_DATABASE_ID!,
-      process.env.APPWRITE_TICKETS_COLLECTION_ID!,
-      ticket_id
-    );
+    // Fetch ticket
+    let ticket;
+    try {
+      ticket = await backendDB.getDocument(
+        process.env.APPWRITE_DATABASE_ID!,
+        process.env.APPWRITE_TICKETS_COLLECTION_ID!,
+        ticket_id
+      );
+    } catch {
+      return NextResponse.json(
+        { ok: false, error: "Ticket not found" },
+        { status: 404 }
+      );
+    }
 
     if (ticket.event_id !== event_id) {
       return NextResponse.json(
@@ -30,8 +39,20 @@ export async function POST(req: Request) {
       );
     }
 
-    // Get stud_ids from the ticket (stored as stud_id in the ticket document)
+    // Get stud_ids from the ticket
     const studIds: string[] = ticket.stud_id || [];
+
+    // Fetch user names
+    const usersRes = await backendDB.listDocuments(
+      process.env.APPWRITE_DATABASE_ID!,
+      process.env.APPWRITE_USERS_COLLECTION_ID!,
+      [Query.equal("$id", studIds)]
+    );
+
+    const userMap = new Map<string, string>();
+    for (const user of usersRes.documents) {
+      userMap.set(user.$id, user.name);
+    }
 
     // Check attendance for each student
     const members = await Promise.all(
@@ -46,9 +67,9 @@ export async function POST(req: Request) {
           ]
         );
 
-        // If a record exists, the student is present
         return {
           stud_id,
+          name: userMap.get(stud_id) || stud_id,
           present: attendance.documents.length > 0,
         };
       })
@@ -57,7 +78,6 @@ export async function POST(req: Request) {
     return NextResponse.json({
       ok: true,
       ticket_active: ticket.active,
-      event_id: ticket.event_id,
       members,
     });
   } catch (error) {
