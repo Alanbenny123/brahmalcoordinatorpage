@@ -4,31 +4,30 @@ import { Query } from "node-appwrite";
 
 export async function GET(req: Request) {
   try {
-    // 1️⃣ Get business event_id from header
-    const businessEventId = req.headers.get("x-event-id");
+    // 1️⃣ Get event ID from header (Appwrite document ID)
+    const eventId = req.headers.get("x-event-id");
 
-    if (!businessEventId) {
+    if (!eventId) {
       return NextResponse.json(
         { ok: false, error: "Event ID missing" },
         { status: 401 }
       );
     }
 
-    // 2️⃣ Fetch event using business event_id
-    const eventRes = await backendDB.listDocuments(
+    // 2️⃣ Fetch event using Appwrite ID
+    const eventDoc = await backendDB.getDocument(
       process.env.APPWRITE_DATABASE_ID!,
       process.env.APPWRITE_EVENTS_COLLECTION_ID!,
-      [Query.equal("event_id", businessEventId)]
+      eventId
     );
 
-    if (eventRes.total === 0) {
+    if (!eventDoc) {
       return NextResponse.json(
         { ok: false, error: "Event not found" },
         { status: 404 }
       );
     }
 
-    const eventDoc = eventRes.documents[0];
     const eventAppwriteId = eventDoc.$id;
 
     // 3️⃣ Fetch tickets (registrations)
@@ -58,7 +57,6 @@ export async function GET(req: Request) {
     return NextResponse.json({
       ok: true,
       event: {
-        event_id: eventDoc.event_id,
         event_name: eventDoc.event_name,
         completed: eventDoc.completed,
       },

@@ -17,18 +17,35 @@ export async function POST(req: Request) {
       );
     }
 
-    const { event_id, stud_ids } = result.data;
+    const { event_id, stud_ids, team_name } = result.data;
 
-    // 3️⃣ Create ticket document
+    // 3️⃣ Prepare ticket data
+    const ticketData: any = {
+      event_id,
+      stud_id: stud_ids,
+      active: true,
+    };
+
+    // Handle team_name
+    if (stud_ids.length === 1) {
+      // Individual registration - use user's name as team_name
+      const userDoc = await backendDB.getDocument(
+        process.env.APPWRITE_DATABASE_ID!,
+        process.env.APPWRITE_USERS_COLLECTION_ID!,
+        stud_ids[0]
+      );
+      ticketData.team_name = userDoc.name;
+    } else if (team_name) {
+      // Group registration - use provided team_name
+      ticketData.team_name = team_name;
+    }
+
+    // Create ticket document
     const ticket = await backendDB.createDocument(
       process.env.APPWRITE_DATABASE_ID!,
       process.env.APPWRITE_TICKETS_COLLECTION_ID!,
       ID.unique(),
-      {
-        event_id,
-        stud_id: stud_ids,
-        active: true,
-      }
+      ticketData
     );
 
     // 4️⃣ Add ticket ID to each user's tickets[] array

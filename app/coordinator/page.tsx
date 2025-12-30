@@ -21,12 +21,10 @@ import { Html5Qrcode } from "html5-qrcode";
 // Types
 interface CoordinatorData {
   id: string;
-  event_id: string;
   event_name: string;
 }
 
 interface EventData {
-  event_id: string;
   event_name: string;
   completed: boolean;
 }
@@ -82,11 +80,52 @@ export default function CoordinatorDashboard() {
   }>({ first: "", second: "", third: "" });
   const [savingWinners, setSavingWinners] = useState(false);
 
+  // Participants state
+  const [expandedTeams, setExpandedTeams] = useState<Set<string>>(new Set());
+
   // Camera scanner state
   const [cameraOpen, setCameraOpen] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
   const scannerContainerRef = useRef<HTMLDivElement>(null);
+
+  // Get unique team names from participants
+  const uniqueTeams = Array.from(
+    new Set(
+      participants
+        .filter((p) => p.team_name)
+        .map((p) => p.team_name as string)
+    )
+  ).sort();
+
+  // Group participants by team
+  const participantsByTeam = participants.reduce((acc, participant) => {
+    const teamName = participant.team_name || "Individual Participants";
+    if (!acc[teamName]) {
+      acc[teamName] = [];
+    }
+    acc[teamName].push(participant);
+    return acc;
+  }, {} as Record<string, Participant[]>);
+
+  const teamNames = Object.keys(participantsByTeam).sort((a, b) => {
+    if (a === "Individual Participants") return 1;
+    if (b === "Individual Participants") return -1;
+    return a.localeCompare(b);
+  });
+
+  // Toggle team expansion
+  const toggleTeam = (teamName: string) => {
+    setExpandedTeams((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(teamName)) {
+        newSet.delete(teamName);
+      } else {
+        newSet.add(teamName);
+      }
+      return newSet;
+    });
+  };
 
   // Check authentication on mount
   useEffect(() => {
@@ -108,18 +147,18 @@ export default function CoordinatorDashboard() {
 
   // Fetch event data when coordinator is loaded
   useEffect(() => {
-    if (!coordinator?.event_id) return;
+    if (!coordinator?.id) return;
     fetchDashboardData();
   }, [coordinator]);
 
   async function fetchDashboardData() {
-    if (!coordinator?.event_id) return;
+    if (!coordinator?.id) return;
     setLoading(true);
 
     try {
       // Fetch dashboard stats and event info
       const statsRes = await fetch("/api/coordinator/dashboard", {
-        headers: { "x-event-id": coordinator.event_id },
+        headers: { "x-event-id": coordinator.id },
       });
       const statsData = await statsRes.json();
 
@@ -130,7 +169,7 @@ export default function CoordinatorDashboard() {
 
       // Fetch participants
       const participantsRes = await fetch("/api/coordinator/participants", {
-        headers: { "x-event-id": coordinator.event_id },
+        headers: { "x-event-id": coordinator.id },
       });
       const participantsData = await participantsRes.json();
 
@@ -208,7 +247,7 @@ export default function CoordinatorDashboard() {
 
   // Save winners
   async function saveWinners() {
-    if (!coordinator?.event_id) return;
+    if (!coordinator?.id) return;
     setSavingWinners(true);
 
     try {
@@ -221,7 +260,7 @@ export default function CoordinatorDashboard() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          event_id: coordinator.event_id,
+          event_id: coordinator.id,
           winners: winnersData,
         }),
       });
@@ -415,7 +454,7 @@ export default function CoordinatorDashboard() {
             </div>
             <div>
               <p className="text-white font-medium text-sm">{coordinator.event_name || "Coordinator"}</p>
-              <p className="text-xs text-slate-500">Event ID: {coordinator.event_id}</p>
+              <p className="text-xs text-slate-500">Event ID: {coordinator.id}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -448,7 +487,6 @@ export default function CoordinatorDashboard() {
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <h1 className="text-2xl font-bold text-white mb-1">{event.event_name}</h1>
-                  <p className="text-sm text-slate-400">Event ID: {event.event_id}</p>
                 </div>
                 <span
                   className={clsx(
@@ -719,45 +757,92 @@ export default function CoordinatorDashboard() {
                     <p className="text-slate-400">No participants yet</p>
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                    {participants.map((participant, idx) => (
-                      <div
-                        key={idx}
-                        className="p-4 bg-slate-900/50 border border-slate-800 rounded-xl flex items-center justify-between hover:border-slate-700 transition-all"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={clsx(
-                              "w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold",
-                              participant.checked_in
-                                ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                                : "bg-slate-800 text-slate-400 border border-slate-700"
-                            )}
+                  <div className="space-y-3">
+                    {teamNames.map((teamName) => {
+                      const teamMembers = participantsByTeam[teamName];
+                      const checkedInCount = teamMembers.filter(m => m.checked_in).length;
+                      const isExpanded = expandedTeams.has(teamName);
+
+                      return (
+                        <div
+                          key={teamName}
+                          className="bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden hover:border-slate-700 transition-all"
+                        >
+                          {/* Team Header */}
+                          <button
+                            onClick={() => toggleTeam(teamName)}
+                            className="w-full p-4 flex items-center justify-between text-left hover:bg-slate-800/30 transition-colors"
                           >
-                            {participant.student_name.charAt(0).toUpperCase()}
-                          </div>
-                          <div>
-                            <p className="text-white font-medium">{participant.student_name}</p>
-                            {participant.team_name && (
-                              <p className="text-xs text-slate-500">Team: {participant.team_name}</p>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {participant.checked_in ? (
-                            <span className="flex items-center gap-1 text-xs text-emerald-400 font-medium">
-                              <CheckCircle2 className="w-4 h-4" />
-                              Present
-                            </span>
-                          ) : (
-                            <span className="flex items-center gap-1 text-xs text-slate-500 font-medium">
-                              <XCircle className="w-4 h-4" />
-                              Absent
-                            </span>
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-sm font-bold text-white">
+                                {teamName === "Individual Participants" ? "👤" : teamName.charAt(0).toUpperCase()}
+                              </div>
+                              <div>
+                                <p className="text-white font-semibold">{teamName}</p>
+                                <p className="text-xs text-slate-500">
+                                  {teamMembers.length} {teamMembers.length === 1 ? 'member' : 'members'} • {checkedInCount} checked in
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <div className="text-xs font-medium px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400">
+                                {checkedInCount}/{teamMembers.length}
+                              </div>
+                              <svg
+                                className={clsx(
+                                  "w-5 h-5 text-slate-400 transition-transform",
+                                  isExpanded && "rotate-180"
+                                )}
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </div>
+                          </button>
+
+                          {/* Team Members */}
+                          {isExpanded && (
+                            <div className="border-t border-slate-800 divide-y divide-slate-800">
+                              {teamMembers.map((participant, idx) => (
+                                <div
+                                  key={idx}
+                                  className="p-4 pl-16 flex items-center justify-between hover:bg-slate-800/20 transition-colors"
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <div
+                                      className={clsx(
+                                        "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
+                                        participant.checked_in
+                                          ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                                          : "bg-slate-800 text-slate-400 border border-slate-700"
+                                      )}
+                                    >
+                                      {participant.student_name.charAt(0).toUpperCase()}
+                                    </div>
+                                    <p className="text-white text-sm">{participant.student_name}</p>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    {participant.checked_in ? (
+                                      <span className="flex items-center gap-1 text-xs text-emerald-400 font-medium">
+                                        <CheckCircle2 className="w-4 h-4" />
+                                        Present
+                                      </span>
+                                    ) : (
+                                      <span className="flex items-center gap-1 text-xs text-slate-500 font-medium">
+                                        <XCircle className="w-4 h-4" />
+                                        Absent
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
                           )}
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -772,7 +857,7 @@ export default function CoordinatorDashboard() {
                     Declare Winners
                   </h3>
                   <p className="text-sm text-slate-400 mb-6">
-                    Select winners from the registered participants
+                    Select winning teams from the registered participants
                   </p>
 
                   <div className="space-y-4">
@@ -790,10 +875,9 @@ export default function CoordinatorDashboard() {
                         className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
                       >
                         <option value="">Select winner...</option>
-                        {participants.map((p, idx) => (
-                          <option key={idx} value={p.student_name}>
-                            {p.student_name}
-                            {p.team_name ? ` (${p.team_name})` : ""}
+                        {uniqueTeams.map((teamName, idx) => (
+                          <option key={idx} value={teamName}>
+                            {teamName}
                           </option>
                         ))}
                       </select>
@@ -813,10 +897,9 @@ export default function CoordinatorDashboard() {
                         className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
                       >
                         <option value="">Select winner...</option>
-                        {participants.map((p, idx) => (
-                          <option key={idx} value={p.student_name}>
-                            {p.student_name}
-                            {p.team_name ? ` (${p.team_name})` : ""}
+                        {uniqueTeams.map((teamName, idx) => (
+                          <option key={idx} value={teamName}>
+                            {teamName}
                           </option>
                         ))}
                       </select>
@@ -836,10 +919,9 @@ export default function CoordinatorDashboard() {
                         className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
                       >
                         <option value="">Select winner...</option>
-                        {participants.map((p, idx) => (
-                          <option key={idx} value={p.student_name}>
-                            {p.student_name}
-                            {p.team_name ? ` (${p.team_name})` : ""}
+                        {uniqueTeams.map((teamName, idx) => (
+                          <option key={idx} value={teamName}>
+                            {teamName}
                           </option>
                         ))}
                       </select>

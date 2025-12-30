@@ -31,33 +31,31 @@ export async function POST(req: Request) {
       }
     }
 
-    // Check if event exists
-    const eventRes = await backendDB.listDocuments(
+    // Check if event exists using Appwrite ID
+    const eventDoc = await backendDB.getDocument(
       process.env.APPWRITE_DATABASE_ID!,
       process.env.APPWRITE_EVENTS_COLLECTION_ID!,
-      [Query.equal("event_id", event_id)]
+      event_id
     );
 
-    if (eventRes.total === 0) {
+    if (!eventDoc) {
       return NextResponse.json(
         { ok: false, error: "Event not found" },
         { status: 404 }
       );
     }
 
-    const eventDoc = eventRes.documents[0];
+    // Extract team names from winners array
+    const winnerTeamNames = winners.map((winner) => winner.name);
 
-    // Check if winners collection exists, if so, update or create
-    // For now, we'll update the event document with winners
-    // You may want to create a separate winners collection
-
+    // Update the event document with winners array
     try {
       await backendDB.updateDocument(
         process.env.APPWRITE_DATABASE_ID!,
         process.env.APPWRITE_EVENTS_COLLECTION_ID!,
         eventDoc.$id,
         {
-          winners: JSON.stringify(winners),
+          winners: winnerTeamNames,
         }
       );
     } catch (updateError) {
@@ -83,30 +81,28 @@ export async function POST(req: Request) {
 
 export async function GET(req: Request) {
   try {
-    const businessEventId = req.headers.get("x-event-id");
+    const eventId = req.headers.get("x-event-id");
 
-    if (!businessEventId) {
+    if (!eventId) {
       return NextResponse.json(
         { ok: false, error: "Event ID missing" },
         { status: 401 }
       );
     }
 
-    // Fetch event
-    const eventRes = await backendDB.listDocuments(
+    // Fetch event using Appwrite ID
+    const eventDoc = await backendDB.getDocument(
       process.env.APPWRITE_DATABASE_ID!,
       process.env.APPWRITE_EVENTS_COLLECTION_ID!,
-      [Query.equal("event_id", businessEventId)]
+      eventId
     );
 
-    if (eventRes.total === 0) {
+    if (!eventDoc) {
       return NextResponse.json(
         { ok: false, error: "Event not found" },
         { status: 404 }
       );
     }
-
-    const eventDoc = eventRes.documents[0];
     let winners = [];
 
     try {
@@ -119,7 +115,6 @@ export async function GET(req: Request) {
 
     return NextResponse.json({
       ok: true,
-      event_id: businessEventId,
       winners,
     });
   } catch (error) {

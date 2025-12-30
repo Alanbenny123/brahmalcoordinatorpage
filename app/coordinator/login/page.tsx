@@ -4,16 +4,16 @@ import { useState } from "react";
 import { Loader2, Shield } from "lucide-react";
 
 export default function CoordinatorLoginPage() {
-  const [data, setData] = useState({ event_id: "", event_pass: "" });
+  const [data, setData] = useState({ event_name: "", event_pass: "" });
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState({ event_id: "", event_pass: "", global: "" });
+  const [errors, setErrors] = useState({ event_name: "", event_pass: "", global: "" });
 
   async function handleLogin() {
-    setErrors({ event_id: "", event_pass: "", global: "" });
+    setErrors({ event_name: "", event_pass: "", global: "" });
 
     // Quick client-side guardrails
-    const nextErrors = { event_id: "", event_pass: "", global: "" };
-    if (!data.event_id.trim()) nextErrors.event_id = "Event ID is required";
+    const nextErrors = { event_name: "", event_pass: "", global: "" };
+    if (!data.event_name.trim()) nextErrors.event_name = "Event name is required";
     if (!data.event_pass.trim()) nextErrors.event_pass = "Password is required";
     const hasLocalErrors = Object.values(nextErrors).some(Boolean);
     if (hasLocalErrors) {
@@ -64,14 +64,14 @@ export default function CoordinatorLoginPage() {
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-300">Event ID</label>
+            <label className="text-sm font-medium text-slate-300">Event Name</label>
             <input
               className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-white placeholder-slate-500 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
-              placeholder="Enter your event ID"
-              value={data.event_id}
-              onChange={(e) => setData({ ...data, event_id: e.target.value })}
+              placeholder="Enter your event name"
+              value={data.event_name}
+              onChange={(e) => setData({ ...data, event_name: e.target.value })}
             />
-            {errors.event_id && <p className="text-sm text-rose-400">{errors.event_id}</p>}
+            {errors.event_name && <p className="text-sm text-rose-400">{errors.event_name}</p>}
           </div>
 
           <div className="space-y-2">

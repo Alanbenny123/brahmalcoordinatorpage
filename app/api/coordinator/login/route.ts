@@ -18,21 +18,21 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { event_id, event_pass } = body;
+    const { event_name, event_pass } = body;
 
     // Basic validation
-    if (!event_id || !event_pass) {
+    if (!event_name || !event_pass) {
       return NextResponse.json(
-        { success: false, error: "Event ID and password are required" },
+        { success: false, error: "Event name and password are required" },
         { status: 400 }
       );
     }
 
-    // Find event by event_id
+    // Find event by event_name
     const eventList = await backendDB.listDocuments(
       DB_ID,
       EVENTS_COLLECTION,
-      [Query.equal("event_id", event_id)]
+      [Query.equal("event_name", event_name)]
     );
 
     if (!eventList.total || !eventList.documents?.length) {
@@ -59,7 +59,6 @@ export async function POST(req: Request) {
       token,
       coordinator: {
         id: event.$id,
-        event_id: event.event_id,
         event_name: event.event_name,
       },
     });

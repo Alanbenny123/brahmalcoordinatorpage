@@ -21,6 +21,7 @@ export const ProfileUpdateSchema = z.object({
 export const GenerateTicketSchema = z.object({
     event_id: z.string().min(1, "Event ID is required"),
     stud_ids: z.array(z.string()).min(1, "At least one student ID is required"),
+    team_name: z.string().optional(),
 });
 
 export const ScanTicketSchema = z.object({

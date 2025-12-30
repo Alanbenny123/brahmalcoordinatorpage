@@ -106,6 +106,7 @@ Certificates Generated
     {
     "event_id": "EVT101",
     "stud_ids": ["USER_1", "USER_2"]
+    "team_name": "team name"
     }
 
     Response
@@ -172,4 +173,50 @@ Certificates Generated
     {
     "ok": true,
     "tickets_closed": 120
+    }
+
+
+    5️⃣ Save Winners
+
+    POST /api/coordinator/winners
+
+    {
+    "event_id": "event_appwrite_document_id",
+    "winners": [
+        { "position": 1, "name": "Team Alpha" },
+        { "position": 2, "name": "Team Beta" },
+        { "position": 3, "name": "Team Gamma" }
+    ]
+    }
+
+
+    Response
+
+    {
+    "ok": true,
+    "message": "Winners saved successfully",
+    "event_id": "event_appwrite_document_id",
+    "winners": [
+        { "position": 1, "name": "Team Alpha" },
+        { "position": 2, "name": "Team Beta" },
+        { "position": 3, "name": "Team Gamma" }
+    ]
+    }
+
+
+    6️⃣ Get Winners
+
+    GET /api/coordinator/winners
+    Headers: { "x-event-id": "event_appwrite_document_id" }
+
+
+    Response
+
+    {
+    "ok": true,
+    "winners": [
+        { "position": 1, "name": "Team Alpha" },
+        { "position": 2, "name": "Team Beta" },
+        { "position": 3, "name": "Team Gamma" }
+    ]
     }
