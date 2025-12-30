@@ -252,62 +252,88 @@ export default function CoordinatorDashboard() {
     setCameraOpen(true);
     setCameraError(null);
 
+    // Ensure any existing scanner is stopped first
+    if (html5QrCodeRef.current) {
+      try {
+        await html5QrCodeRef.current.stop();
+        html5QrCodeRef.current.clear();
+      } catch {
+        // Ignore errors when stopping
+      }
+      html5QrCodeRef.current = null;
+    }
+
     // Wait for the container to be mounted
     setTimeout(async () => {
       try {
         const html5QrCode = new Html5Qrcode("qr-reader");
         html5QrCodeRef.current = html5QrCode;
 
-        // Get available cameras
-        const devices = await Html5Qrcode.getCameras();
-        if (devices && devices.length === 0) {
-          setCameraError("No camera found on this device");
-          return;
+        // Try environment camera first, fallback to user camera
+        try {
+          await html5QrCode.start(
+            { facingMode: "environment" },
+            {
+              fps: 10,
+              qrbox: { width: 250, height: 250 },
+            },
+            async (decodedText) => {
+              await stopCamera();
+              setTicketInput(decodedText);
+              scanTicketById(decodedText);
+            },
+            () => {}
+          );
+        } catch {
+          // Fallback: try user-facing camera (for laptops)
+          await html5QrCode.start(
+            { facingMode: "user" },
+            {
+              fps: 10,
+              qrbox: { width: 250, height: 250 },
+            },
+            async (decodedText) => {
+              await stopCamera();
+              setTicketInput(decodedText);
+              scanTicketById(decodedText);
+            },
+            () => {}
+          );
         }
-
-        // Prefer back camera on mobile, otherwise use first available
-        const backCamera = devices.find(
-          (device) =>
-            device.label.toLowerCase().includes("back") ||
-            device.label.toLowerCase().includes("rear") ||
-            device.label.toLowerCase().includes("environment")
-        );
-        const cameraId = backCamera ? backCamera.id : devices[0].id;
-
-        await html5QrCode.start(
-          cameraId,
-          {
-            fps: 10,
-            qrbox: { width: 250, height: 250 },
-          },
-          async (decodedText) => {
-            // QR code scanned successfully
-            await stopCamera();
-            setTicketInput(decodedText);
-            // Trigger scan with the decoded ticket ID
-            scanTicketById(decodedText);
-          },
-          () => {
-            // QR code not detected (ignore)
-          }
-        );
       } catch (err) {
         console.error("Camera error:", err);
-        setCameraError(
-          err instanceof Error ? err.message : "Failed to access camera"
-        );
+        let errorMessage = "Failed to access camera";
+        
+        if (err instanceof Error) {
+          if (err.name === "NotReadableError" || err.message.includes("NotReadableError")) {
+            errorMessage = "Camera is in use by another app. Please close other apps using the camera and try again.";
+          } else if (err.name === "NotAllowedError" || err.message.includes("NotAllowedError")) {
+            errorMessage = "Camera permission denied. Please allow camera access and try again.";
+          } else if (err.name === "NotFoundError" || err.message.includes("NotFoundError")) {
+            errorMessage = "No camera found on this device.";
+          } else {
+            errorMessage = err.message;
+          }
+        }
+        
+        setCameraError(errorMessage);
       }
-    }, 100);
+    }, 200);
   }
 
   // Stop camera
   async function stopCamera() {
     if (html5QrCodeRef.current) {
       try {
-        await html5QrCodeRef.current.stop();
-        html5QrCodeRef.current = null;
+        const state = html5QrCodeRef.current.getState();
+        if (state === 2) { // Html5QrcodeScannerState.SCANNING
+          await html5QrCodeRef.current.stop();
+        }
+        html5QrCodeRef.current.clear();
       } catch (err) {
         console.error("Error stopping camera:", err);
+      } finally {
+        html5QrCodeRef.current = null;
       }
     }
     setCameraOpen(false);
@@ -344,7 +370,16 @@ export default function CoordinatorDashboard() {
   useEffect(() => {
     return () => {
       if (html5QrCodeRef.current) {
-        html5QrCodeRef.current.stop().catch(console.error);
+        try {
+          const state = html5QrCodeRef.current.getState();
+          if (state === 2) { // Html5QrcodeScannerState.SCANNING
+            html5QrCodeRef.current.stop().catch(console.error);
+          }
+          html5QrCodeRef.current.clear();
+        } catch {
+          // Ignore cleanup errors
+        }
+        html5QrCodeRef.current = null;
       }
     };
   }, []);
@@ -614,28 +649,7 @@ export default function CoordinatorDashboard() {
                   </div>
                 )}
 
-                {/* Quick Actions */}
-                <div className="p-4 bg-slate-900/50 border border-slate-800 rounded-2xl">
-                  <h4 className="text-sm font-medium text-slate-400 mb-3">Quick Actions</h4>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      onClick={openCamera}
-                      className="py-3 bg-amber-600 hover:bg-amber-500 border border-amber-500 rounded-xl text-sm font-medium text-white transition-all flex items-center justify-center gap-2"
-                    >
-                      <Camera className="w-4 h-4" />
-                      Open Camera
-                    </button>
-                    <button
-                      onClick={() => {
-                        setTicketInput("");
-                        setScanResult(null);
-                      }}
-                      className="py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-sm font-medium text-white transition-all"
-                    >
-                      Clear
-                    </button>
-                  </div>
-                </div>
+
 
                 {/* Camera Modal */}
                 {cameraOpen && (
@@ -655,12 +669,23 @@ export default function CoordinatorDashboard() {
                         <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-center">
                           <XCircle className="w-8 h-8 text-red-500 mx-auto mb-2" />
                           <p className="text-red-400 text-sm">{cameraError}</p>
-                          <button
-                            onClick={stopCamera}
-                            className="mt-4 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-white text-sm"
-                          >
-                            Close
-                          </button>
+                          <div className="flex gap-2 justify-center mt-4">
+                            <button
+                              onClick={() => {
+                                setCameraError(null);
+                                stopCamera().then(() => openCamera());
+                              }}
+                              className="px-4 py-2 bg-amber-600 hover:bg-amber-500 rounded-lg text-white text-sm"
+                            >
+                              Retry
+                            </button>
+                            <button
+                              onClick={stopCamera}
+                              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-white text-sm"
+                            >
+                              Close
+                            </button>
+                          </div>
                         </div>
                       ) : (
                         <>
@@ -893,10 +918,13 @@ export default function CoordinatorDashboard() {
 
         {/* Floating QR Button */}
         <button
-          onClick={() => setMainTab("scanner")}
+          onClick={() => {
+            setMainTab("scanner");
+            openCamera();
+          }}
           className="fixed bottom-6 left-1/2 -translate-x-1/2 w-14 h-14 bg-amber-600 rounded-2xl flex items-center justify-center shadow-xl shadow-amber-500/30 hover:bg-amber-500 transition-all"
         >
-          <QrCode className="w-6 h-6 text-white" />
+          <Camera className="w-6 h-6 text-white" />
         </button>
       </div>
 
