@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { backendDB } from "@/lib/appwrite/backend";
 import { Query } from "node-appwrite";
+import { verifyPassword } from "@/lib/hash";
 import crypto from "crypto";
 
 const DB_ID = process.env.APPWRITE_DATABASE_ID!;
@@ -18,34 +19,34 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { event_name, event_pass } = body;
+    const { event_id, event_pass } = body;
 
     // Basic validation
-    if (!event_name || !event_pass) {
+    if (!event_id || !event_pass) {
       return NextResponse.json(
-        { success: false, error: "Event name and password are required" },
+        { success: false, error: "Event ID and password are required" },
         { status: 400 }
       );
     }
 
-    // Find event by event_name
-    const eventList = await backendDB.listDocuments(
-      DB_ID,
-      EVENTS_COLLECTION,
-      [Query.equal("event_name", event_name)]
-    );
-
-    if (!eventList.total || !eventList.documents?.length) {
+    // Find event by Appwrite document ID
+    let event;
+    try {
+      event = await backendDB.getDocument(
+        DB_ID,
+        EVENTS_COLLECTION,
+        event_id
+      );
+    } catch (error) {
       return NextResponse.json(
         { success: false, message: "Event not found" },
         { status: 404 }
       );
     }
 
-    const event = eventList.documents[0];
-
-    // Direct password comparison (plain text as per your DB)
-    if (event.event_pass !== event_pass) {
+    // Verify hashed password
+    const valid = await verifyPassword(event.event_pass, event_pass);
+    if (!valid) {
       return NextResponse.json(
         { success: false, message: "Invalid password" },
         { status: 401 }
@@ -53,10 +54,12 @@ export async function POST(req: Request) {
     }
 
     const token = crypto.randomUUID();
+    const expiresAt = Date.now() + (24 * 60 * 60 * 1000); // 24 hours from now
 
     return NextResponse.json({
       success: true,
       token,
+      expiresAt,
       coordinator: {
         id: event.$id,
         event_name: event.event_name,

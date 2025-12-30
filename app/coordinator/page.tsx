@@ -130,6 +130,17 @@ export default function CoordinatorDashboard() {
   // Check authentication on mount
   useEffect(() => {
     const stored = localStorage.getItem("coordinator");
+    const expiresAt = localStorage.getItem("coordinator_expires_at");
+    
+    // Check if session has expired
+    if (expiresAt && Date.now() > parseInt(expiresAt)) {
+      localStorage.removeItem("coordinator");
+      localStorage.removeItem("coordinator_token");
+      localStorage.removeItem("coordinator_expires_at");
+      window.location.href = "/coordinator/login";
+      return;
+    }
+    
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
@@ -137,6 +148,7 @@ export default function CoordinatorDashboard() {
       } catch {
         localStorage.removeItem("coordinator");
         localStorage.removeItem("coordinator_token");
+        localStorage.removeItem("coordinator_expires_at");
         window.location.href = "/coordinator/login";
       }
     } else {
