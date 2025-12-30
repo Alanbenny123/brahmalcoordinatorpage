@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { MarkAttendanceSchema } from "@/lib/validations/schemas";
-import { backendDB } from "@/lib/appwrite/server";
+import { backendDB } from "@/lib/appwrite/backend";
 import { ID, Query } from "node-appwrite";
 
 export async function POST(req: Request) {

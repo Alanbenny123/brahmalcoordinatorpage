@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { backendDB } from "@/lib/appwrite/server";
+import { backendDB } from "@/lib/appwrite/backend";
 
 export async function GET() {
   try {

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { backendDB } from "@/lib/appwrite/server";
+import { backendDB } from "@/lib/appwrite/backend";
 import { Query } from "node-appwrite";
 
 export async function GET(req: Request) {

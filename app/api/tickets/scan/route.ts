@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { ScanTicketSchema } from "@/lib/validations/schemas";
-import { backendDB } from "@/lib/appwrite/server";
+import { backendDB } from "@/lib/appwrite/backend";
 import { Query } from "node-appwrite";
 
 export async function POST(req: Request) {
