@@ -115,13 +115,6 @@ export default function LoginPage() {
         <p className="text-center text-sm text-slate-400">
           New here? <a className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors" href="/register">Create an account</a>
         </p>
-
-        <p className="text-center text-sm text-slate-400">
-          Not a student?{" "}
-          <a className="text-amber-400 hover:text-amber-300 font-medium transition-colors" href="/coordinator/login">
-            Coordinator Login
-          </a>
-        </p>
       </div>
     </div>
   );
