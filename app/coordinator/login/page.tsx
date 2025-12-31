@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, Shield } from "lucide-react";
+import { Loader2, Shield, Eye, EyeOff } from "lucide-react";
 
 export default function CoordinatorLoginPage() {
   const [data, setData] = useState({ event_id: "", event_pass: "" });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({ event_id: "", event_pass: "", global: "" });
+  const [showPassword, setShowPassword] = useState(false);
 
   async function handleLogin() {
     setErrors({ event_id: "", event_pass: "", global: "" });
@@ -77,13 +78,22 @@ export default function CoordinatorLoginPage() {
 
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-300">Event Password</label>
-            <input
-              type="password"
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-white placeholder-slate-500 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
-              placeholder="••••••••"
-              value={data.event_pass}
-              onChange={(e) => setData({ ...data, event_pass: e.target.value })}
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 pr-12 text-white placeholder-slate-500 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
+                placeholder="••••••••"
+                value={data.event_pass}
+                onChange={(e) => setData({ ...data, event_pass: e.target.value })}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-300 transition-colors"
+              >
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
             {errors.event_pass && <p className="text-sm text-rose-400">{errors.event_pass}</p>}
           </div>
         </div>

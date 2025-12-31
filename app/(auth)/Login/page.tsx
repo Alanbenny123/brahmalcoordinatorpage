@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, LogIn } from "lucide-react";
+import { Loader2, LogIn, Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
   const [data, setData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({ email: "", password: "", global: "" });
+  const [showPassword, setShowPassword] = useState(false);
 
   async function handleLogin() {
     setErrors({ email: "", password: "", global: "" });
@@ -80,13 +81,22 @@ export default function LoginPage() {
 
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-300">Password</label>
-            <input
-              type="password"
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-white placeholder-slate-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
-              placeholder="••••••••"
-              value={data.password}
-              onChange={e => setData({ ...data, password: e.target.value })}
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 pr-12 text-white placeholder-slate-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                placeholder="••••••••"
+                value={data.password}
+                onChange={e => setData({ ...data, password: e.target.value })}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-300 transition-colors"
+              >
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
             {errors.password && <p className="text-sm text-rose-400">{errors.password}</p>}
           </div>
         </div>
@@ -100,9 +110,17 @@ export default function LoginPage() {
         >
           {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Sign In"}
         </button>
+        
 
         <p className="text-center text-sm text-slate-400">
           New here? <a className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors" href="/register">Create an account</a>
+        </p>
+
+        <p className="text-center text-sm text-slate-400">
+          Not a student?{" "}
+          <a className="text-amber-400 hover:text-amber-300 font-medium transition-colors" href="/coordinator/login">
+            Coordinator Login
+          </a>
         </p>
       </div>
     </div>
