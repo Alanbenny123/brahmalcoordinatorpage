@@ -108,12 +108,7 @@ export default function CoordinatorLoginPage() {
           {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Sign In as Coordinator"}
         </button>
 
-        <p className="text-center text-sm text-slate-400">
-          Not a coordinator?{" "}
-          <a className="text-amber-400 hover:text-amber-300 font-medium transition-colors" href="/Login">
-            Student Login
-          </a>
-        </p>
+
       </div>
     </div>
   );
