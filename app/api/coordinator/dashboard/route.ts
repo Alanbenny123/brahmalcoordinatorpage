@@ -31,8 +31,7 @@ export async function GET(req: Request) {
 
     let totalParticipants = 0;
     for (const ticket of tickets) {
-      const studIds = (ticket as any).stud_id;
-      totalParticipants += Array.isArray(studIds) ? studIds.length : 0;
+      totalParticipants += ticket.stud_id?.length ?? 0;
     }
 
     // 4️⃣ Fetch attendance using smart fetcher
@@ -40,12 +39,11 @@ export async function GET(req: Request) {
     const checkedInParticipants = attendance.length;
 
     // 5️⃣ Final response with source tracking
-    const eventData = event as any;
     return NextResponse.json({
       ok: true,
       event: {
-        event_name: eventData.event_name,
-        completed: eventData.completed,
+        event_name: event.event_name,
+        completed: event.completed,
       },
       stats: {
         total_registrations: totalRegistrations,

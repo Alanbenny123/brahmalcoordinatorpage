@@ -38,9 +38,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const ticketData = ticket as any;
-
-    if (ticketData.event_id !== event_id) {
+    if (ticket.event_id !== event_id) {
       return NextResponse.json(
         { ok: false, error: "Ticket does not belong to this event" },
         { status: 403 }
@@ -48,14 +46,14 @@ export async function POST(req: Request) {
     }
 
     // Get stud_ids from the ticket
-    const studIds: string[] = ticketData.stud_id || [];
+    const studIds: string[] = ticket.stud_id || [];
 
     // Fetch user names using smart fetcher
     const { users } = await fetchUsers(studIds);
 
     const userMap = new Map<string, string>();
     for (const user of users) {
-      userMap.set(user.$id, (user as any).name);
+      userMap.set(user.$id, user.name);
     }
 
     // Fetch attendance for the event
@@ -64,9 +62,8 @@ export async function POST(req: Request) {
     // Build a set of checked-in students for this specific ticket
     const checkedInSet = new Set<string>();
     for (const record of attendance) {
-      const recordData = record as any;
-      if (recordData.ticket_id === ticket_id) {
-        checkedInSet.add(recordData.stud_id);
+      if (record.ticket_id === ticket_id) {
+        checkedInSet.add(record.stud_id);
       }
     }
 
@@ -79,7 +76,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       ok: true,
-      ticket_active: ticketData.active,
+      ticket_active: ticket.active,
       members,
       _meta: {
         source: ticketSource,

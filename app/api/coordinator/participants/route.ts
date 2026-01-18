@@ -33,14 +33,13 @@ export async function GET(req: Request) {
 
     const checkedInSet = new Set<string>();
     for (const record of attendance) {
-      checkedInSet.add((record as any).stud_id);
+      checkedInSet.add(record.stud_id);
     }
 
     // 5️⃣ Collect all unique student IDs
     const studentIds = new Set<string>();
     for (const ticket of tickets) {
-      const studIds = (ticket as any).stud_id ?? [];
-      for (const studId of studIds) {
+      for (const studId of ticket.stud_id ?? []) {
         studentIds.add(studId);
       }
     }
@@ -50,7 +49,7 @@ export async function GET(req: Request) {
 
     const userMap = new Map<string, string>();
     for (const user of users) {
-      userMap.set(user.$id, (user as any).name);
+      userMap.set(user.$id, user.name);
     }
 
     // 7️⃣ Build participants list
@@ -61,11 +60,9 @@ export async function GET(req: Request) {
     }[] = [];
 
     for (const ticket of tickets) {
-      const ticketData = ticket as any;
-      const teamName = ticketData.team_name ?? null;
-      const studIds = ticketData.stud_id ?? [];
+      const teamName = ticket.team_name ?? null;
 
-      for (const studId of studIds) {
+      for (const studId of ticket.stud_id ?? []) {
         participants.push({
           team_name: teamName,
           student_name: userMap.get(studId) ?? "Unknown",
