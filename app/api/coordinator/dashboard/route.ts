@@ -49,7 +49,7 @@ export async function GET(req: Request) {
         venue: eventData.venue || "",
         date: eventData.date || "",
         time: eventData.time || "",
-        slot: eventData.slot || eventData.slots || eventData.event_slot || "",
+        slot: eventData.slot !== undefined && eventData.slot !== null ? String(eventData.slot) : "",
       },
       stats: {
         total_registrations: totalRegistrations,
