@@ -40,8 +40,10 @@ interface EventData {
 interface Participant {
   team_name: string | null;
   student_name: string;
+  email: string;
+  phone: string;
+  stud_id: string;
   checked_in: boolean;
-  stud_id?: string;
 }
 
 interface DashboardStats {
@@ -903,10 +905,10 @@ export default function CoordinatorDashboard() {
                                   key={idx}
                                   className="p-4 pl-16 flex items-center justify-between hover:bg-slate-800/20 transition-colors"
                                 >
-                                  <div className="flex items-center gap-3">
+                                  <div className="flex items-center gap-3 flex-1 min-w-0">
                                     <div
                                       className={clsx(
-                                        "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
+                                        "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0",
                                         participant.checked_in
                                           ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
                                           : "bg-slate-800 text-slate-400 border border-slate-700"
@@ -914,9 +916,19 @@ export default function CoordinatorDashboard() {
                                     >
                                       {participant.student_name.charAt(0).toUpperCase()}
                                     </div>
-                                    <p className="text-white text-sm">{participant.student_name}</p>
+                                    <div className="min-w-0 flex-1">
+                                      <p className="text-white text-sm font-medium truncate">{participant.student_name}</p>
+                                      <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1">
+                                        {participant.email && (
+                                          <p className="text-slate-400 text-xs truncate">📧 {participant.email}</p>
+                                        )}
+                                        {participant.phone && (
+                                          <p className="text-slate-400 text-xs">📱 {participant.phone}</p>
+                                        )}
+                                      </div>
+                                    </div>
                                   </div>
-                                  <div className="flex items-center gap-2">
+                                  <div className="flex items-center gap-2 flex-shrink-0 ml-2">
                                     {participant.checked_in ? (
                                       <span className="flex items-center gap-1 text-xs text-emerald-400 font-medium">
                                         <CheckCircle2 className="w-4 h-4" />
