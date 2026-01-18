@@ -109,12 +109,17 @@ export async function fetchTicketsForEvent(eventId: string) {
                     ...doc.data()
                 }));
                 
-                return {
-                    tickets,
-                    total: tickets.length,
-                    source: 'firebase' as DataSource,
-                    success: true,
-                };
+                // Only return Firebase results if we found tickets
+                if (tickets.length > 0) {
+                    return {
+                        tickets,
+                        total: tickets.length,
+                        source: 'firebase' as DataSource,
+                        success: true,
+                    };
+                }
+                // If Firebase returned 0 tickets, fall through to Appwrite
+                console.log('Firebase returned 0 tickets, trying Appwrite...');
             } catch (fbError) {
                 console.warn('Firebase tickets fetch failed, falling back to Appwrite:', fbError);
             }
