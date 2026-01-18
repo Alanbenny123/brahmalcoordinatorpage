@@ -44,6 +44,7 @@ export async function GET(req: Request) {
     return NextResponse.json({
       ok: true,
       event: {
+        $id: eventId,
         event_name: eventData.event_name,
         completed: eventData.completed,
         venue: eventData.venue || "",
