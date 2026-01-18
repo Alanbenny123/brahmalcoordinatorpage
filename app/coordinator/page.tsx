@@ -1157,21 +1157,14 @@ export default function CoordinatorDashboard() {
                         <Award className="w-4 h-4 text-amber-400" />
                         Slot
                       </label>
-                      <select
+                      <input
+                        type="number"
+                        min="1"
                         value={eventSettings.slot}
                         onChange={(e) => setEventSettings({ ...eventSettings, slot: e.target.value })}
-                        className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
-                      >
-                        <option value="">Select slot...</option>
-                        <option value="Morning">Morning (9 AM - 12 PM)</option>
-                        <option value="Afternoon">Afternoon (12 PM - 3 PM)</option>
-                        <option value="Evening">Evening (3 PM - 6 PM)</option>
-                        <option value="Night">Night (6 PM - 9 PM)</option>
-                        <option value="Slot 1">Slot 1</option>
-                        <option value="Slot 2">Slot 2</option>
-                        <option value="Slot 3">Slot 3</option>
-                        <option value="Slot 4">Slot 4</option>
-                      </select>
+                        placeholder="Enter slot number (e.g. 1, 2, 3...)"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 px-4 text-white placeholder:text-slate-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                      />
                     </div>
                   </div>
 
