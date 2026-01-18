@@ -1,71 +1,54 @@
 import { NextResponse } from "next/server";
-import { backendDB } from "@/lib/appwrite/backend";
-import { Query } from "node-appwrite";
+import { cookies } from "next/headers";
+import { fetchEvent, fetchTicketsForEvent, fetchAttendanceForEvent, fetchUsers } from "@/lib/data-fetcher";
 
 export async function GET(req: Request) {
   try {
-    // 1️⃣ Get event ID (Appwrite document ID)
-    const eventId = req.headers.get("x-event-id");
+    // 1️⃣ Get event ID from secure cookie
+    const cookieStore = await cookies();
+    const eventId = cookieStore.get("coord_event")?.value;
 
     if (!eventId) {
       return NextResponse.json(
-        { ok: false, error: "Event ID missing" },
+        { ok: false, error: "Not authenticated as coordinator" },
         { status: 401 }
       );
     }
 
-    // 2️⃣ Verify event exists
-    const eventDoc = await backendDB.getDocument(
-      process.env.APPWRITE_DATABASE_ID!,
-      process.env.APPWRITE_EVENTS_COLLECTION_ID!,
-      eventId
-    );
+    // 2️⃣ Verify event exists using smart fetcher
+    const { event, success: eventSuccess } = await fetchEvent(eventId);
 
-    if (!eventDoc) {
+    if (!eventSuccess || !event) {
       return NextResponse.json(
         { ok: false, error: "Event not found" },
         { status: 404 }
       );
     }
 
-    const eventAppwriteId = eventId;
+    // 3️⃣ Fetch tickets using smart fetcher
+    const { tickets } = await fetchTicketsForEvent(eventId);
 
-    // 3️⃣ Fetch tickets for event
-    const ticketsRes = await backendDB.listDocuments(
-      process.env.APPWRITE_DATABASE_ID!,
-      process.env.APPWRITE_TICKETS_COLLECTION_ID!,
-      [Query.equal("event_id", eventAppwriteId)]
-    );
-
-    // 4️⃣ Fetch attendance (INDIVIDUAL) - use Appwrite ID
-    const attendanceRes = await backendDB.listDocuments(
-      process.env.APPWRITE_DATABASE_ID!,
-      process.env.APPWRITE_ATTENDANCE_COLLECTION_ID!,
-      [Query.equal("event_id", eventAppwriteId)]
-    );
+    // 4️⃣ Fetch attendance using smart fetcher
+    const { attendance } = await fetchAttendanceForEvent(eventId);
 
     const checkedInSet = new Set<string>();
-    for (const record of attendanceRes.documents) {
+    for (const record of attendance) {
       checkedInSet.add(record.stud_id);
     }
 
     // 5️⃣ Collect all unique student IDs
     const studentIds = new Set<string>();
-    for (const ticket of ticketsRes.documents) {
+    for (const ticket of tickets) {
       for (const studId of ticket.stud_id ?? []) {
         studentIds.add(studId);
       }
     }
 
-    // 6️⃣ Fetch users (names)
-    const usersRes = await backendDB.listDocuments(
-      process.env.APPWRITE_DATABASE_ID!,
-      process.env.APPWRITE_USERS_COLLECTION_ID!,
-      [Query.equal("$id", Array.from(studentIds))]
-    );
+    // 6️⃣ Fetch users using smart fetcher
+    const { users } = await fetchUsers(Array.from(studentIds));
 
     const userMap = new Map<string, string>();
-    for (const user of usersRes.documents) {
+    for (const user of users) {
       userMap.set(user.$id, user.name);
     }
 
@@ -76,7 +59,7 @@ export async function GET(req: Request) {
       checked_in: boolean;
     }[] = [];
 
-    for (const ticket of ticketsRes.documents) {
+    for (const ticket of tickets) {
       const teamName = ticket.team_name ?? null;
 
       for (const studId of ticket.stud_id ?? []) {

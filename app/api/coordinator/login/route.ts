@@ -56,15 +56,33 @@ export async function POST(req: Request) {
     const token = crypto.randomUUID();
     const expiresAt = Date.now() + (24 * 60 * 60 * 1000); // 24 hours from now
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
-      token,
       expiresAt,
       coordinator: {
         id: event.$id,
         event_name: event.event_name,
       },
     });
+
+    // Set httpOnly cookies for session
+    response.cookies.set('coord_session', token, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+      maxAge: 60 * 60 * 24, // 1 day
+    });
+
+    response.cookies.set('coord_event', event.$id, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+      maxAge: 60 * 60 * 24, // 1 day
+    });
+
+    return response;
   } catch (err: any) {
     console.error("Coordinator login error:", err);
     return NextResponse.json(

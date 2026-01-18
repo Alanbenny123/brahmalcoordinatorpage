@@ -1,64 +1,49 @@
 import { NextResponse } from "next/server";
-import { backendDB } from "@/lib/appwrite/backend";
-import { Query } from "node-appwrite";
+import { cookies } from "next/headers";
+import { fetchEvent, fetchTicketsForEvent, fetchAttendanceForEvent } from "@/lib/data-fetcher";
 
 export async function GET(req: Request) {
   try {
-    // 1️⃣ Get event ID from header (Appwrite document ID)
-    const eventId = req.headers.get("x-event-id");
+    // 1️⃣ Get event ID from secure cookie (not client header)
+    const cookieStore = await cookies();
+    const eventId = cookieStore.get("coord_event")?.value;
 
     if (!eventId) {
       return NextResponse.json(
-        { ok: false, error: "Event ID missing" },
+        { ok: false, error: "Not authenticated as coordinator" },
         { status: 401 }
       );
     }
 
-    // 2️⃣ Fetch event using Appwrite ID
-    const eventDoc = await backendDB.getDocument(
-      process.env.APPWRITE_DATABASE_ID!,
-      process.env.APPWRITE_EVENTS_COLLECTION_ID!,
-      eventId
-    );
+    // 2️⃣ Fetch event using smart fetcher (Firebase first, Appwrite fallback)
+    const { event, source: eventSource, success: eventSuccess } = await fetchEvent(eventId);
 
-    if (!eventDoc) {
+    if (!eventSuccess || !event) {
       return NextResponse.json(
         { ok: false, error: "Event not found" },
         { status: 404 }
       );
     }
 
-    const eventAppwriteId = eventDoc.$id;
-
-    // 3️⃣ Fetch tickets (registrations)
-    const ticketsRes = await backendDB.listDocuments(
-      process.env.APPWRITE_DATABASE_ID!,
-      process.env.APPWRITE_TICKETS_COLLECTION_ID!,
-      [Query.equal("event_id", eventAppwriteId)]
-    );
-
-    const totalRegistrations = ticketsRes.total;
+    // 3️⃣ Fetch tickets using smart fetcher
+    const { tickets, source: ticketsSource } = await fetchTicketsForEvent(eventId);
+    const totalRegistrations = tickets.length;
 
     let totalParticipants = 0;
-    for (const ticket of ticketsRes.documents) {
+    for (const ticket of tickets) {
       totalParticipants += ticket.stud_id?.length ?? 0;
     }
 
-    // 4️⃣ Fetch attendance (INDIVIDUAL attendance) - use Appwrite ID
-    const attendanceRes = await backendDB.listDocuments(
-      process.env.APPWRITE_DATABASE_ID!,
-      process.env.APPWRITE_ATTENDANCE_COLLECTION_ID!,
-      [Query.equal("event_id", eventAppwriteId)]
-    );
+    // 4️⃣ Fetch attendance using smart fetcher
+    const { attendance, source: attendanceSource } = await fetchAttendanceForEvent(eventId);
+    const checkedInParticipants = attendance.length;
 
-    const checkedInParticipants = attendanceRes.total;
-
-    // 5️⃣ Final response
+    // 5️⃣ Final response with source tracking
     return NextResponse.json({
       ok: true,
       event: {
-        event_name: eventDoc.event_name,
-        completed: eventDoc.completed,
+        event_name: event.event_name,
+        completed: event.completed,
       },
       stats: {
         total_registrations: totalRegistrations,
@@ -67,6 +52,13 @@ export async function GET(req: Request) {
         not_checked_in_participants:
           totalParticipants - checkedInParticipants,
       },
+      _meta: {
+        sources: {
+          event: eventSource,
+          tickets: ticketsSource,
+          attendance: attendanceSource,
+        }
+      }
     });
 
   } catch (error) {

@@ -33,9 +33,7 @@ export default function CoordinatorLoginPage() {
       setLoading(false);
 
       if (result.success) {
-        localStorage.setItem("coordinator_token", result.token);
-        localStorage.setItem("coordinator_expires_at", result.expiresAt.toString());
-        localStorage.setItem("coordinator", JSON.stringify(result.coordinator));
+        // Cookies are set by server, just redirect
         window.location.href = "/coordinator";
       } else {
         const message = result.message || result.error || "Login failed";

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { ScanTicketSchema } from "@/lib/validations/schemas";
-import { backendDB } from "@/lib/appwrite/backend";
-import { Query } from "node-appwrite";
+import { fetchTicket, fetchUsers, fetchAttendanceForEvent } from "@/lib/data-fetcher";
 
 export async function POST(req: Request) {
   try {
@@ -17,15 +17,21 @@ export async function POST(req: Request) {
 
     const { ticket_id, event_id } = result.data;
 
-    // Fetch ticket
-    let ticket;
-    try {
-      ticket = await backendDB.getDocument(
-        process.env.APPWRITE_DATABASE_ID!,
-        process.env.APPWRITE_TICKETS_COLLECTION_ID!,
-        ticket_id
+    // Verify coordinator is authenticated for this event
+    const cookieStore = await cookies();
+    const coordEventId = cookieStore.get("coord_event")?.value;
+
+    if (!coordEventId || coordEventId !== event_id) {
+      return NextResponse.json(
+        { ok: false, error: "Not authorized for this event" },
+        { status: 403 }
       );
-    } catch {
+    }
+
+    // Fetch ticket using smart fetcher (Firebase first, Appwrite fallback)
+    const { ticket, success: ticketSuccess, source: ticketSource } = await fetchTicket(ticket_id);
+
+    if (!ticketSuccess || !ticket) {
       return NextResponse.json(
         { ok: false, error: "Ticket not found" },
         { status: 404 }
@@ -42,43 +48,39 @@ export async function POST(req: Request) {
     // Get stud_ids from the ticket
     const studIds: string[] = ticket.stud_id || [];
 
-    // Fetch user names
-    const usersRes = await backendDB.listDocuments(
-      process.env.APPWRITE_DATABASE_ID!,
-      process.env.APPWRITE_USERS_COLLECTION_ID!,
-      [Query.equal("$id", studIds)]
-    );
+    // Fetch user names using smart fetcher
+    const { users } = await fetchUsers(studIds);
 
     const userMap = new Map<string, string>();
-    for (const user of usersRes.documents) {
+    for (const user of users) {
       userMap.set(user.$id, user.name);
     }
 
-    // Check attendance for each student
-    const members = await Promise.all(
-      studIds.map(async (stud_id: string) => {
-        const attendance = await backendDB.listDocuments(
-          process.env.APPWRITE_DATABASE_ID!,
-          process.env.APPWRITE_ATTENDANCE_COLLECTION_ID!,
-          [
-            Query.equal("stud_id", stud_id),
-            Query.equal("ticket_id", ticket_id),
-            Query.equal("event_id", event_id),
-          ]
-        );
+    // Fetch attendance for the event
+    const { attendance } = await fetchAttendanceForEvent(event_id);
 
-        return {
-          stud_id,
-          name: userMap.get(stud_id) || stud_id,
-          present: attendance.documents.length > 0,
-        };
-      })
-    );
+    // Build a set of checked-in students for this specific ticket
+    const checkedInSet = new Set<string>();
+    for (const record of attendance) {
+      if (record.ticket_id === ticket_id) {
+        checkedInSet.add(record.stud_id);
+      }
+    }
+
+    // Build members list
+    const members = studIds.map((stud_id: string) => ({
+      stud_id,
+      name: userMap.get(stud_id) || stud_id,
+      present: checkedInSet.has(stud_id),
+    }));
 
     return NextResponse.json({
       ok: true,
       ticket_active: ticket.active,
       members,
+      _meta: {
+        source: ticketSource,
+      }
     });
   } catch (error) {
     console.error("Ticket scan error:", error);

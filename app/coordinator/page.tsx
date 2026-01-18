@@ -15,6 +15,10 @@ import {
   RefreshCw,
   Camera,
   X,
+  Settings,
+  MapPin,
+  Clock,
+  Save,
 } from "lucide-react";
 import { Html5Qrcode } from "html5-qrcode";
 
@@ -27,6 +31,10 @@ interface CoordinatorData {
 interface EventData {
   event_name: string;
   completed: boolean;
+  venue?: string;
+  date?: string;
+  time?: string;
+  slot?: string;
 }
 
 interface Participant {
@@ -50,7 +58,7 @@ interface ScanResult {
   members?: { stud_id: string; name: string; present: boolean }[];
 }
 
-type MainTab = "scanner" | "participants" | "winners";
+type MainTab = "scanner" | "participants" | "winners" | "settings";
 
 export default function CoordinatorDashboard() {
   // Auth state
@@ -79,6 +87,15 @@ export default function CoordinatorDashboard() {
     third: string;
   }>({ first: "", second: "", third: "" });
   const [savingWinners, setSavingWinners] = useState(false);
+
+  // Event settings state
+  const [eventSettings, setEventSettings] = useState({
+    venue: "",
+    date: "",
+    time: "",
+    slot: "",
+  });
+  const [savingSettings, setSavingSettings] = useState(false);
 
   // Participants state
   const [expandedTeams, setExpandedTeams] = useState<Set<string>>(new Set());
@@ -127,34 +144,33 @@ export default function CoordinatorDashboard() {
     });
   };
 
-  // Check authentication on mount
+  // Check authentication on mount (fetch coordinator info from server)
   useEffect(() => {
-    const stored = localStorage.getItem("coordinator");
-    const expiresAt = localStorage.getItem("coordinator_expires_at");
-    
-    // Check if session has expired
-    if (expiresAt && Date.now() > parseInt(expiresAt)) {
-      localStorage.removeItem("coordinator");
-      localStorage.removeItem("coordinator_token");
-      localStorage.removeItem("coordinator_expires_at");
-      window.location.href = "/coordinator/login";
-      return;
-    }
-    
-    if (stored) {
+    async function loadCoordinator() {
       try {
-        const parsed = JSON.parse(stored);
-        setCoordinator(parsed);
-      } catch {
-        localStorage.removeItem("coordinator");
-        localStorage.removeItem("coordinator_token");
-        localStorage.removeItem("coordinator_expires_at");
+        // Fetch dashboard data which will validate session
+        const statsRes = await fetch("/api/coordinator/dashboard");
+        const statsData = await statsRes.json();
+
+        if (statsData.ok && statsData.event) {
+          // Extract coordinator info from event data
+          setCoordinator({
+            id: statsData.event.$id || 'unknown',
+            event_name: statsData.event.event_name || 'Event',
+          });
+        } else {
+          // Not authenticated, middleware should redirect but as backup
+          window.location.href = "/coordinator/login";
+        }
+      } catch (error) {
+        console.error("Failed to load coordinator:", error);
         window.location.href = "/coordinator/login";
+      } finally {
+        setAuthLoading(false);
       }
-    } else {
-      window.location.href = "/coordinator/login";
     }
-    setAuthLoading(false);
+
+    loadCoordinator();
   }, []);
 
   // Fetch event data when coordinator is loaded
@@ -168,10 +184,8 @@ export default function CoordinatorDashboard() {
     setLoading(true);
 
     try {
-      // Fetch dashboard stats and event info
-      const statsRes = await fetch("/api/coordinator/dashboard", {
-        headers: { "x-event-id": coordinator.id },
-      });
+      // Fetch dashboard stats and event info (event ID from cookie)
+      const statsRes = await fetch("/api/coordinator/dashboard");
       const statsData = await statsRes.json();
 
       if (statsData.ok) {
@@ -179,14 +193,25 @@ export default function CoordinatorDashboard() {
         setStats(statsData.stats);
       }
 
-      // Fetch participants
-      const participantsRes = await fetch("/api/coordinator/participants", {
-        headers: { "x-event-id": coordinator.id },
-      });
+      // Fetch participants (event ID from cookie)
+      const participantsRes = await fetch("/api/coordinator/participants");
       const participantsData = await participantsRes.json();
 
       if (participantsData.ok) {
         setParticipants(participantsData.participants);
+      }
+
+      // Fetch event settings
+      const settingsRes = await fetch("/api/coordinator/update-event");
+      const settingsData = await settingsRes.json();
+
+      if (settingsData.ok) {
+        setEventSettings({
+          venue: settingsData.event.venue || "",
+          date: settingsData.event.date || "",
+          time: settingsData.event.time || "",
+          slot: settingsData.event.slot || "",
+        });
       }
     } catch (error) {
       console.error("Failed to fetch dashboard data:", error);
@@ -291,10 +316,45 @@ export default function CoordinatorDashboard() {
     }
   }
 
+  // Save event settings (venue, date, time, slot)
+  async function saveEventSettings() {
+    if (!coordinator?.id) return;
+    setSavingSettings(true);
+
+    try {
+      const res = await fetch("/api/coordinator/update-event", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(eventSettings),
+      });
+
+      const data = await res.json();
+      if (data.ok) {
+        setToast("Event settings saved successfully! ✓");
+        setTimeout(() => setToast(null), 3000);
+        // Refresh dashboard data
+        fetchDashboardData();
+      } else {
+        setToast(data.error || "Failed to save settings");
+        setTimeout(() => setToast(null), 3000);
+      }
+    } catch (error) {
+      console.error("Failed to save event settings:", error);
+      setToast("Failed to save settings");
+      setTimeout(() => setToast(null), 3000);
+    } finally {
+      setSavingSettings(false);
+    }
+  }
+
   // Logout
-  function logout() {
-    localStorage.removeItem("coordinator");
-    localStorage.removeItem("coordinator_token");
+  async function logout() {
+    try {
+      // Call logout API to clear cookies
+      await fetch("/api/coordinator/logout", { method: "POST" });
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
     window.location.href = "/coordinator/login";
   }
 
@@ -552,42 +612,54 @@ export default function CoordinatorDashboard() {
             </div>
 
             {/* Tab Navigation */}
-            <div className="flex gap-2 mb-6 p-1 bg-slate-900/50 border border-slate-800 rounded-xl">
+            <div className="flex gap-2 mb-6 p-1 bg-slate-900/50 border border-slate-800 rounded-xl overflow-x-auto">
               <button
                 onClick={() => setMainTab("scanner")}
                 className={clsx(
-                  "flex-1 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2",
+                  "flex-1 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 min-w-[80px]",
                   mainTab === "scanner"
                     ? "bg-amber-600 text-white shadow-lg shadow-amber-500/20"
                     : "text-slate-400 hover:text-white hover:bg-slate-800"
                 )}
               >
                 <QrCode className="w-4 h-4" />
-                Scanner
+                <span className="hidden sm:inline">Scanner</span>
               </button>
               <button
                 onClick={() => setMainTab("participants")}
                 className={clsx(
-                  "flex-1 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2",
+                  "flex-1 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 min-w-[80px]",
                   mainTab === "participants"
                     ? "bg-amber-600 text-white shadow-lg shadow-amber-500/20"
                     : "text-slate-400 hover:text-white hover:bg-slate-800"
                 )}
               >
                 <Users className="w-4 h-4" />
-                Participants
+                <span className="hidden sm:inline">Participants</span>
               </button>
               <button
                 onClick={() => setMainTab("winners")}
                 className={clsx(
-                  "flex-1 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2",
+                  "flex-1 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 min-w-[80px]",
                   mainTab === "winners"
                     ? "bg-amber-600 text-white shadow-lg shadow-amber-500/20"
                     : "text-slate-400 hover:text-white hover:bg-slate-800"
                 )}
               >
                 <Trophy className="w-4 h-4" />
-                Winners
+                <span className="hidden sm:inline">Winners</span>
+              </button>
+              <button
+                onClick={() => setMainTab("settings")}
+                className={clsx(
+                  "flex-1 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 min-w-[80px]",
+                  mainTab === "settings"
+                    ? "bg-amber-600 text-white shadow-lg shadow-amber-500/20"
+                    : "text-slate-400 hover:text-white hover:bg-slate-800"
+                )}
+              >
+                <Settings className="w-4 h-4" />
+                <span className="hidden sm:inline">Settings</span>
               </button>
             </div>
 
@@ -610,18 +682,27 @@ export default function CoordinatorDashboard() {
                       className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 px-4 text-white placeholder:text-slate-500 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
                     />
 
-                    <button
-                      onClick={handleScan}
-                      disabled={scanning || !ticketInput.trim()}
-                      className="w-full py-3 bg-amber-600 hover:bg-amber-500 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-xl font-medium flex items-center justify-center gap-2 transition-all"
-                    >
-                      {scanning ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <QrCode className="w-4 h-4" />
-                      )}
-                      {scanning ? "Scanning..." : "Verify Ticket"}
-                    </button>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={handleScan}
+                        disabled={scanning || !ticketInput.trim()}
+                        className="flex-1 py-3 bg-amber-600 hover:bg-amber-500 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-xl font-medium flex items-center justify-center gap-2 transition-all"
+                      >
+                        {scanning ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <QrCode className="w-4 h-4" />
+                        )}
+                        {scanning ? "Scanning..." : "Verify Ticket"}
+                      </button>
+                      
+                      <button
+                        onClick={openCamera}
+                        className="px-4 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-medium flex items-center justify-center gap-2 transition-all"
+                      >
+                        <Camera className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -997,6 +1078,153 @@ export default function CoordinatorDashboard() {
                         </div>
                       </div>
                     )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Settings Tab - Event Details Manipulation */}
+            {mainTab === "settings" && (
+              <div className="space-y-6">
+                <div className="p-6 bg-slate-900/50 border border-slate-800 rounded-2xl">
+                  <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                    <Settings className="w-5 h-5 text-indigo-400" />
+                    Event Settings
+                  </h3>
+                  <p className="text-sm text-slate-400 mb-6">
+                    Update venue, date, time, and slot details for your event
+                  </p>
+
+                  <div className="space-y-4">
+                    {/* Venue */}
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-2 text-sm font-medium text-slate-300">
+                        <MapPin className="w-4 h-4 text-emerald-400" />
+                        Venue
+                      </label>
+                      <input
+                        type="text"
+                        value={eventSettings.venue}
+                        onChange={(e) => setEventSettings({ ...eventSettings, venue: e.target.value })}
+                        placeholder="Enter venue location..."
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 px-4 text-white placeholder:text-slate-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                      />
+                    </div>
+
+                    {/* Date */}
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-2 text-sm font-medium text-slate-300">
+                        <Calendar className="w-4 h-4 text-blue-400" />
+                        Date
+                      </label>
+                      <input
+                        type="date"
+                        value={eventSettings.date}
+                        onChange={(e) => setEventSettings({ ...eventSettings, date: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                      />
+                    </div>
+
+                    {/* Time */}
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-2 text-sm font-medium text-slate-300">
+                        <Clock className="w-4 h-4 text-purple-400" />
+                        Time
+                      </label>
+                      <input
+                        type="time"
+                        value={eventSettings.time}
+                        onChange={(e) => setEventSettings({ ...eventSettings, time: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                      />
+                    </div>
+
+                    {/* Slot */}
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-2 text-sm font-medium text-slate-300">
+                        <Award className="w-4 h-4 text-amber-400" />
+                        Slot
+                      </label>
+                      <select
+                        value={eventSettings.slot}
+                        onChange={(e) => setEventSettings({ ...eventSettings, slot: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                      >
+                        <option value="">Select slot...</option>
+                        <option value="Morning">Morning (9 AM - 12 PM)</option>
+                        <option value="Afternoon">Afternoon (12 PM - 3 PM)</option>
+                        <option value="Evening">Evening (3 PM - 6 PM)</option>
+                        <option value="Night">Night (6 PM - 9 PM)</option>
+                        <option value="Slot 1">Slot 1</option>
+                        <option value="Slot 2">Slot 2</option>
+                        <option value="Slot 3">Slot 3</option>
+                        <option value="Slot 4">Slot 4</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={saveEventSettings}
+                    disabled={savingSettings}
+                    className="w-full mt-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 disabled:from-slate-700 disabled:to-slate-700 text-white rounded-xl font-medium flex items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-500/20"
+                  >
+                    {savingSettings ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Save className="w-4 h-4" />
+                    )}
+                    Save Settings
+                  </button>
+                </div>
+
+                {/* Current Settings Preview */}
+                {(eventSettings.venue || eventSettings.date || eventSettings.time || eventSettings.slot) && (
+                  <div className="p-6 bg-slate-900/50 border border-slate-800 rounded-2xl">
+                    <h4 className="text-sm font-medium text-slate-400 mb-4">Current Event Details</h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      {eventSettings.venue && (
+                        <div className="p-3 bg-slate-950/50 border border-slate-800 rounded-xl">
+                          <div className="flex items-center gap-2 mb-1">
+                            <MapPin className="w-3 h-3 text-emerald-400" />
+                            <p className="text-xs text-slate-500 uppercase tracking-wider">Venue</p>
+                          </div>
+                          <p className="text-sm font-medium text-white">{eventSettings.venue}</p>
+                        </div>
+                      )}
+                      {eventSettings.date && (
+                        <div className="p-3 bg-slate-950/50 border border-slate-800 rounded-xl">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Calendar className="w-3 h-3 text-blue-400" />
+                            <p className="text-xs text-slate-500 uppercase tracking-wider">Date</p>
+                          </div>
+                          <p className="text-sm font-medium text-white">
+                            {new Date(eventSettings.date).toLocaleDateString('en-US', { 
+                              weekday: 'short', 
+                              month: 'short', 
+                              day: 'numeric' 
+                            })}
+                          </p>
+                        </div>
+                      )}
+                      {eventSettings.time && (
+                        <div className="p-3 bg-slate-950/50 border border-slate-800 rounded-xl">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Clock className="w-3 h-3 text-purple-400" />
+                            <p className="text-xs text-slate-500 uppercase tracking-wider">Time</p>
+                          </div>
+                          <p className="text-sm font-medium text-white">{eventSettings.time}</p>
+                        </div>
+                      )}
+                      {eventSettings.slot && (
+                        <div className="p-3 bg-slate-950/50 border border-slate-800 rounded-xl">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Award className="w-3 h-3 text-amber-400" />
+                            <p className="text-xs text-slate-500 uppercase tracking-wider">Slot</p>
+                          </div>
+                          <p className="text-sm font-medium text-white">{eventSettings.slot}</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
