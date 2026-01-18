@@ -5,6 +5,14 @@ export function proxy(request: NextRequest) {
     const coordSession = request.cookies.get('coord_session');
     const path = request.nextUrl.pathname;
 
+    // Redirect root to login
+    if (path === '/') {
+        if (coordSession) {
+            return NextResponse.redirect(new URL('/coordinator', request.url));
+        }
+        return NextResponse.redirect(new URL('/coordinator/login', request.url));
+    }
+
     // Protect coordinator routes (except login)
     if (path.startsWith('/coordinator') && path !== '/coordinator/login') {
         if (!coordSession) {
@@ -24,5 +32,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-    matcher: ['/coordinator/:path*'],
+    matcher: ['/', '/coordinator/:path*'],
 };
