@@ -193,6 +193,14 @@ export default function CoordinatorDashboard() {
       if (statsData.ok) {
         setEvent(statsData.event);
         setStats(statsData.stats);
+        
+        // Set event settings from dashboard data as initial values
+        setEventSettings({
+          venue: statsData.event.venue || "",
+          date: statsData.event.date || "",
+          time: statsData.event.time || "",
+          slot: statsData.event.slot || "",
+        });
       }
 
       // Fetch participants (event ID from cookie)
@@ -201,19 +209,6 @@ export default function CoordinatorDashboard() {
 
       if (participantsData.ok) {
         setParticipants(participantsData.participants);
-      }
-
-      // Fetch event settings
-      const settingsRes = await fetch("/api/coordinator/update-event");
-      const settingsData = await settingsRes.json();
-
-      if (settingsData.ok) {
-        setEventSettings({
-          venue: settingsData.event.venue || "",
-          date: settingsData.event.date || "",
-          time: settingsData.event.time || "",
-          slot: settingsData.event.slot || "",
-        });
       }
     } catch (error) {
       console.error("Failed to fetch dashboard data:", error);

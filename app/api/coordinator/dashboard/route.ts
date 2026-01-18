@@ -46,6 +46,10 @@ export async function GET(req: Request) {
       event: {
         event_name: eventData.event_name,
         completed: eventData.completed,
+        venue: eventData.venue || "",
+        date: eventData.date || "",
+        time: eventData.time || "",
+        slot: eventData.slot || "",
       },
       stats: {
         total_registrations: totalRegistrations,
