@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { MarkAttendanceSchema } from "@/lib/validations/schemas";
-import { backendDB } from "@/lib/appwrite/backend";
+import { getBackendDB } from "@/lib/appwrite/backend";
 import { ID, Query } from "node-appwrite";
 
 export async function POST(req: Request) {
@@ -18,7 +18,7 @@ export async function POST(req: Request) {
     const { ticket_id, stud_id, event_id } = result.data;
 
     // 2️⃣ Fetch ticket
-    const ticket = await backendDB.getDocument(
+    const ticket = await getBackendDB().getDocument(
       process.env.APPWRITE_DATABASE_ID!,
       process.env.APPWRITE_TICKETS_COLLECTION_ID!,
       ticket_id
@@ -33,7 +33,7 @@ export async function POST(req: Request) {
     }
 
     // 4️⃣ Check if attendance record already exists
-    const attendanceRes = await backendDB.listDocuments(
+    const attendanceRes = await getBackendDB().listDocuments(
       process.env.APPWRITE_DATABASE_ID!,
       process.env.APPWRITE_ATTENDANCE_COLLECTION_ID!,
       [
@@ -53,7 +53,7 @@ export async function POST(req: Request) {
     }
 
     // 6️⃣ Create new attendance record
-    await backendDB.createDocument(
+    await getBackendDB().createDocument(
       process.env.APPWRITE_DATABASE_ID!,
       process.env.APPWRITE_ATTENDANCE_COLLECTION_ID!,
       ID.unique(),

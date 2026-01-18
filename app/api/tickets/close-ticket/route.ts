@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { CloseTicketSchema } from "@/lib/validations/schemas";
-import { backendDB } from "@/lib/appwrite/backend";
+import { getBackendDB } from "@/lib/appwrite/backend";
 import { Query } from "node-appwrite";
 
 export async function POST(req: Request) {
@@ -18,7 +18,7 @@ export async function POST(req: Request) {
     const { event_id } = result.data;
 
     // 2️⃣ Fetch event
-    const event = await backendDB.getDocument(
+    const event = await getBackendDB().getDocument(
       process.env.APPWRITE_DATABASE_ID!,
       process.env.APPWRITE_EVENTS_COLLECTION_ID!,
       event_id
@@ -33,7 +33,7 @@ export async function POST(req: Request) {
     }
 
     // 4️⃣ Mark event as completed
-    await backendDB.updateDocument(
+    await getBackendDB().updateDocument(
       process.env.APPWRITE_DATABASE_ID!,
       process.env.APPWRITE_EVENTS_COLLECTION_ID!,
       event_id,
@@ -43,7 +43,7 @@ export async function POST(req: Request) {
     );
 
     // 5️⃣ Fetch all tickets of this event
-    const ticketsRes = await backendDB.listDocuments(
+    const ticketsRes = await getBackendDB().listDocuments(
       process.env.APPWRITE_DATABASE_ID!,
       process.env.APPWRITE_TICKETS_COLLECTION_ID!,
       [Query.equal("event_id", event_id)]
@@ -52,7 +52,7 @@ export async function POST(req: Request) {
     // 6️⃣ Deactivate all tickets
     await Promise.all(
       ticketsRes.documents.map((ticket) =>
-        backendDB.updateDocument(
+        getBackendDB().updateDocument(
           process.env.APPWRITE_DATABASE_ID!,
           process.env.APPWRITE_TICKETS_COLLECTION_ID!,
           ticket.$id,

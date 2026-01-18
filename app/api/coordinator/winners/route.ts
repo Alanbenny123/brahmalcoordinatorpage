@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { backendDB } from "@/lib/appwrite/backend";
+import { getBackendDB } from "@/lib/appwrite/backend";
 import { Query, ID } from "node-appwrite";
 
 export async function POST(req: Request) {
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
     }
 
     // Check if event exists using Appwrite ID
-    const eventDoc = await backendDB.getDocument(
+    const eventDoc = await getBackendDB().getDocument(
       process.env.APPWRITE_DATABASE_ID!,
       process.env.APPWRITE_EVENTS_COLLECTION_ID!,
       event_id
@@ -50,7 +50,7 @@ export async function POST(req: Request) {
 
     // Update the event document with winners array
     try {
-      await backendDB.updateDocument(
+      await getBackendDB().updateDocument(
         process.env.APPWRITE_DATABASE_ID!,
         process.env.APPWRITE_EVENTS_COLLECTION_ID!,
         eventDoc.$id,
@@ -91,7 +91,7 @@ export async function GET(req: Request) {
     }
 
     // Fetch event using Appwrite ID
-    const eventDoc = await backendDB.getDocument(
+    const eventDoc = await getBackendDB().getDocument(
       process.env.APPWRITE_DATABASE_ID!,
       process.env.APPWRITE_EVENTS_COLLECTION_ID!,
       eventId

@@ -14,7 +14,7 @@
  * → Firebase sync happens via admin timer
  */
 
-import { backendDB } from '@/lib/appwrite/backend';
+import { getBackendDB } from '@/lib/appwrite/backend';
 import { Query } from 'node-appwrite';
 import { db } from '@/lib/firebase';
 import {
@@ -75,7 +75,7 @@ export async function fetchEvent(eventId: string) {
         }
         
         // Fallback to Appwrite
-        const eventDoc = await backendDB.getDocument(DB_ID, EVENTS_COLLECTION, eventId);
+        const eventDoc = await getBackendDB().getDocument(DB_ID, EVENTS_COLLECTION, eventId);
         
         return {
             event: eventDoc,
@@ -121,7 +121,7 @@ export async function fetchTicketsForEvent(eventId: string) {
         }
         
         // Fallback to Appwrite
-        const ticketsRes = await backendDB.listDocuments(
+        const ticketsRes = await getBackendDB().listDocuments(
             DB_ID,
             TICKETS_COLLECTION,
             [Query.equal('event_id', eventId)]
@@ -172,7 +172,7 @@ export async function fetchTicket(ticketId: string) {
         }
         
         // Fallback to Appwrite
-        const ticketDoc = await backendDB.getDocument(DB_ID, TICKETS_COLLECTION, ticketId);
+        const ticketDoc = await getBackendDB().getDocument(DB_ID, TICKETS_COLLECTION, ticketId);
         
         return {
             ticket: ticketDoc,
@@ -218,7 +218,7 @@ export async function fetchAttendanceForEvent(eventId: string) {
         }
         
         // Fallback to Appwrite
-        const attendanceRes = await backendDB.listDocuments(
+        const attendanceRes = await getBackendDB().listDocuments(
             DB_ID,
             ATTENDANCE_COLLECTION,
             [Query.equal('event_id', eventId)]
@@ -274,7 +274,7 @@ export async function fetchUsers(userIds: string[]) {
             return { users: [], source: 'appwrite' as DataSource, success: true };
         }
         
-        const usersRes = await backendDB.listDocuments(
+        const usersRes = await getBackendDB().listDocuments(
             DB_ID,
             USERS_COLLECTION,
             [Query.equal('$id', userIds)]

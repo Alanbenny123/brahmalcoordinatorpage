@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { backendDB } from "@/lib/appwrite/backend";
+import { getBackendDB } from "@/lib/appwrite/backend";
 import { Query } from "node-appwrite";
 import { verifyPassword } from "@/lib/hash";
 import crypto from "crypto";
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
     // Find event by Appwrite document ID
     let event;
     try {
-      event = await backendDB.getDocument(
+      event = await getBackendDB().getDocument(
         DB_ID,
         EVENTS_COLLECTION,
         event_id

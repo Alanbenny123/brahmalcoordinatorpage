@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { backendDB } from "@/lib/appwrite/backend";
+import { getBackendDB } from "@/lib/appwrite/backend";
 import { z } from "zod";
 
 const UpdateEventSchema = z.object({
@@ -51,7 +51,7 @@ export async function POST(req: Request) {
     }
 
     // 4️⃣ Update event in Appwrite
-    await backendDB.updateDocument(
+    await getBackendDB().updateDocument(
       process.env.APPWRITE_DATABASE_ID!,
       process.env.APPWRITE_EVENTS_COLLECTION_ID!,
       eventId,
@@ -87,7 +87,7 @@ export async function GET(req: Request) {
     }
 
     // Fetch current event data
-    const event = await backendDB.getDocument(
+    const event = await getBackendDB().getDocument(
       process.env.APPWRITE_DATABASE_ID!,
       process.env.APPWRITE_EVENTS_COLLECTION_ID!,
       eventId
