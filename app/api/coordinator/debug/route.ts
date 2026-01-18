@@ -6,6 +6,7 @@ import { Query } from "node-appwrite";
 const DB_ID = process.env.APPWRITE_DATABASE_ID!;
 const TICKETS_COLLECTION = process.env.APPWRITE_TICKETS_COLLECTION_ID!;
 const EVENTS_COLLECTION = process.env.APPWRITE_EVENTS_COLLECTION_ID!;
+const USERS_COLLECTION = process.env.APPWRITE_USERS_COLLECTION_ID!;
 
 export async function GET(req: Request) {
   try {
@@ -37,6 +38,30 @@ export async function GET(req: Request) {
       console.error("Tickets fetch error:", e);
     }
 
+    // Collect all student IDs from tickets
+    const allStudIds: string[] = [];
+    for (const ticket of tickets) {
+      const studIds = (ticket as any).stud_id ?? [];
+      if (Array.isArray(studIds)) {
+        allStudIds.push(...studIds);
+      }
+    }
+
+    // Get users directly from Appwrite
+    let users: any[] = [];
+    if (allStudIds.length > 0) {
+      try {
+        const usersRes = await getBackendDB().listDocuments(
+          DB_ID,
+          USERS_COLLECTION,
+          [Query.equal('$id', allStudIds)]
+        );
+        users = usersRes.documents;
+      } catch (e) {
+        console.error("Users fetch error:", e);
+      }
+    }
+
     return NextResponse.json({
       eventId,
       eventExists: !!event,
@@ -48,10 +73,20 @@ export async function GET(req: Request) {
         stud_id: t.stud_id,
         active: t.active,
       })),
+      studIdsFromTickets: allStudIds,
+      usersCount: users.length,
+      users: users.map((u: any) => ({
+        id: u.$id,
+        name: u.name,
+        email: u.email,
+        phone: u.phone,
+        college: u.college,
+      })),
       env: {
         DB_ID: DB_ID ? "SET" : "MISSING",
         TICKETS_COLLECTION: TICKETS_COLLECTION ? "SET" : "MISSING",
         EVENTS_COLLECTION: EVENTS_COLLECTION ? "SET" : "MISSING",
+        USERS_COLLECTION: USERS_COLLECTION ? "SET" : "MISSING",
       }
     });
   } catch (error: any) {

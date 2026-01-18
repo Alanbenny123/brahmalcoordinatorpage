@@ -250,9 +250,13 @@ export async function fetchAttendanceForEvent(eventId: string) {
 // Fetch Users (for participant names)
 export async function fetchUsers(userIds: string[]) {
     try {
+        if (userIds.length === 0) {
+            return { users: [], source: 'appwrite' as DataSource, success: true };
+        }
+
         const isFirebaseAvailable = await checkFirebaseAvailable();
         
-        if (isFirebaseAvailable && userIds.length > 0) {
+        if (isFirebaseAvailable) {
             try {
                 const usersRef = collection(db, 'users');
                 const snapshot = await getDocs(usersRef);
@@ -264,21 +268,22 @@ export async function fetchUsers(userIds: string[]) {
                         ...doc.data()
                     }));
                 
-                return {
-                    users,
-                    source: 'firebase' as DataSource,
-                    success: true,
-                };
+                // Only return Firebase results if we found users
+                if (users.length > 0) {
+                    return {
+                        users,
+                        source: 'firebase' as DataSource,
+                        success: true,
+                    };
+                }
+                // If Firebase returned 0 users, fall through to Appwrite
+                console.log('Firebase returned 0 users, trying Appwrite...');
             } catch (fbError) {
                 console.warn('Firebase users fetch failed, falling back to Appwrite:', fbError);
             }
         }
         
         // Fallback to Appwrite
-        if (userIds.length === 0) {
-            return { users: [], source: 'appwrite' as DataSource, success: true };
-        }
-        
         const usersRes = await getBackendDB().listDocuments(
             DB_ID,
             USERS_COLLECTION,
