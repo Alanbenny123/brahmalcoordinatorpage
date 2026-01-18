@@ -11,9 +11,15 @@ export async function POST(req: Request) {
   try {
     // Check env vars
     if (!DB_ID || !EVENTS_COLLECTION) {
-      console.error("Missing env vars:", { DB_ID, EVENTS_COLLECTION });
       return NextResponse.json(
-        { success: false, error: "Server configuration error" },
+        { 
+          success: false, 
+          error: "Server configuration error",
+          debug: {
+            hasDBID: !!DB_ID,
+            hasEventsCollection: !!EVENTS_COLLECTION,
+          }
+        },
         { status: 500 }
       );
     }
