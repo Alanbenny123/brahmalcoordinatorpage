@@ -1125,10 +1125,11 @@ export default function CoordinatorDashboard() {
                         Date
                       </label>
                       <input
-                        type="date"
+                        type="text"
                         value={eventSettings.date}
                         onChange={(e) => setEventSettings({ ...eventSettings, date: e.target.value })}
-                        className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                        placeholder="Enter date (e.g. 2026-01-25 or Jan 25)"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 px-4 text-white placeholder:text-slate-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
                       />
                     </div>
 
@@ -1139,10 +1140,11 @@ export default function CoordinatorDashboard() {
                         Time
                       </label>
                       <input
-                        type="time"
+                        type="text"
                         value={eventSettings.time}
                         onChange={(e) => setEventSettings({ ...eventSettings, time: e.target.value })}
-                        className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                        placeholder="Enter time (e.g. 10:30 AM)"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 px-4 text-white placeholder:text-slate-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
                       />
                     </div>
 
@@ -1153,11 +1155,10 @@ export default function CoordinatorDashboard() {
                         Slot
                       </label>
                       <input
-                        type="number"
-                        min="1"
+                        type="text"
                         value={eventSettings.slot}
                         onChange={(e) => setEventSettings({ ...eventSettings, slot: e.target.value })}
-                        placeholder="Enter slot number (e.g. 1, 2, 3...)"
+                        placeholder="Enter slot (e.g. 1, 2, 3...)"
                         className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 px-4 text-white placeholder:text-slate-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
                       />
                     </div>
