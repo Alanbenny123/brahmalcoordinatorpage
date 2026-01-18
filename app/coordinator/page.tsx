@@ -42,6 +42,7 @@ interface Participant {
   student_name: string;
   email: string;
   phone: string;
+  college: string;
   stud_id: string;
   checked_in: boolean;
 }
@@ -919,6 +920,9 @@ export default function CoordinatorDashboard() {
                                         )}
                                         {participant.phone && (
                                           <p className="text-slate-400 text-xs">📱 {participant.phone}</p>
+                                        )}
+                                        {participant.college && (
+                                          <p className="text-slate-400 text-xs truncate">🏫 {participant.college}</p>
                                         )}
                                       </div>
                                     </div>

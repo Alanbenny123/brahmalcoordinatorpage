@@ -48,14 +48,15 @@ export async function GET(req: Request) {
     // 6️⃣ Fetch users using smart fetcher
     const { users } = await fetchUsers(Array.from(studentIds));
 
-    // Build user map with all details (name, email, phone)
-    const userMap = new Map<string, { name: string; email: string; phone: string }>();
+    // Build user map with all details (name, email, phone, college)
+    const userMap = new Map<string, { name: string; email: string; phone: string; college: string }>();
     for (const user of users) {
       const userData = user as any;
       userMap.set(user.$id, {
         name: userData.name || "Unknown",
         email: userData.email || "",
         phone: userData.phone || userData.phno || "",
+        college: userData.college || "",
       });
     }
 
@@ -65,6 +66,7 @@ export async function GET(req: Request) {
       student_name: string;
       email: string;
       phone: string;
+      college: string;
       stud_id: string;
       checked_in: boolean;
     }[] = [];
@@ -75,12 +77,13 @@ export async function GET(req: Request) {
       const studIds = ticketData.stud_id ?? [];
 
       for (const studId of studIds) {
-        const userInfo = userMap.get(studId) || { name: "Unknown", email: "", phone: "" };
+        const userInfo = userMap.get(studId) || { name: "Unknown", email: "", phone: "", college: "" };
         participants.push({
           team_name: teamName,
           student_name: userInfo.name,
           email: userInfo.email,
           phone: userInfo.phone,
+          college: userInfo.college,
           stud_id: studId,
           checked_in: checkedInSet.has(studId),
         });
