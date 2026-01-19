@@ -99,6 +99,7 @@ export default function CoordinatorDashboard() {
     slot: "",
   });
   const [savingSettings, setSavingSettings] = useState(false);
+  const [closingEvent, setClosingEvent] = useState(false);
 
   // Participants state
   const [expandedTeams, setExpandedTeams] = useState<Set<string>>(new Set());
@@ -345,6 +346,41 @@ export default function CoordinatorDashboard() {
     }
   }
 
+  // Close event manually
+  async function closeEvent() {
+    if (!coordinator?.id) return;
+    
+    const confirmed = confirm("Are you sure you want to close this event? This action cannot be undone.");
+    if (!confirmed) return;
+
+    setClosingEvent(true);
+
+    try {
+      const res = await fetch("/api/coordinator/update-event", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ completed: true }),
+      });
+
+      const data = await res.json();
+      if (data.ok) {
+        setToast("Event closed successfully! ✓");
+        setTimeout(() => setToast(null), 3000);
+        // Refresh dashboard data
+        fetchDashboardData();
+      } else {
+        setToast(data.error || "Failed to close event");
+        setTimeout(() => setToast(null), 3000);
+      }
+    } catch (error) {
+      console.error("Failed to close event:", error);
+      setToast("Failed to close event");
+      setTimeout(() => setToast(null), 3000);
+    } finally {
+      setClosingEvent(false);
+    }
+  }
+
   // Logout
   async function logout() {
     try {
@@ -557,17 +593,30 @@ export default function CoordinatorDashboard() {
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <h1 className="text-2xl font-bold text-white mb-1">{event.event_name}</h1>
-                </div>
-                <span
-                  className={clsx(
-                    "px-3 py-1 rounded-full text-xs font-semibold",
-                    event.completed
-                      ? "bg-slate-600 text-slate-300"
-                      : "bg-emerald-500 text-white"
+                  {event.slot && (
+                    <p className="text-sm text-slate-400">Slot: {event.slot}</p>
                   )}
-                >
-                  {event.completed ? "Completed" : "Active"}
-                </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={clsx(
+                      "px-3 py-1 rounded-full text-xs font-semibold",
+                      event.completed
+                        ? "bg-slate-600 text-slate-300"
+                        : "bg-emerald-500 text-white"
+                    )}
+                  >
+                    {event.completed ? "Completed" : "Active"}
+                  </span>
+                  {!event.completed && (
+                    <button
+                      onClick={closeEvent}
+                      className="px-3 py-1 rounded-full text-xs font-semibold bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors border border-red-500/30"
+                    >
+                      Close Event
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Stats Grid */}

@@ -8,6 +8,7 @@ const UpdateEventSchema = z.object({
   date: z.string().optional(),
   time: z.string().optional(),
   slot: z.string().optional(),
+  completed: z.boolean().optional(),
 });
 
 export async function POST(req: Request) {
@@ -34,14 +35,15 @@ export async function POST(req: Request) {
       );
     }
 
-    const { venue, date, time, slot } = result.data;
+    const { venue, date, time, slot, completed } = result.data;
 
     // 3️⃣ Build update object (only include provided fields)
-    const updateData: Record<string, string> = {};
+    const updateData: Record<string, string | boolean> = {};
     if (venue !== undefined) updateData.venue = venue;
     if (date !== undefined) updateData.date = date;
     if (time !== undefined) updateData.time = time;
     if (slot !== undefined) updateData.slot = slot;
+    if (completed !== undefined) updateData.completed = completed;
 
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json(
