@@ -551,32 +551,32 @@ export default function CoordinatorDashboard() {
         <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-orange-600/20 rounded-full blur-[120px]" />
       </div>
 
-      <div className="relative z-10 max-w-lg mx-auto px-4 py-6">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 py-6 lg:px-8">
         {/* Header */}
-        <header className="flex items-center justify-between mb-6">
+        <header className="flex items-center justify-between mb-6 lg:mb-8">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 font-bold">
+            <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 font-bold text-lg lg:text-xl">
               {coordinator.event_name?.charAt(0).toUpperCase() || "C"}
             </div>
             <div>
-              <p className="text-white font-medium text-sm">{coordinator.event_name || "Coordinator"}</p>
-              <p className="text-xs text-slate-500">Event ID: {coordinator.id}</p>
+              <p className="text-white font-medium text-sm lg:text-lg">{coordinator.event_name || "Coordinator"}</p>
+              <p className="text-xs lg:text-sm text-slate-500">Event ID: {coordinator.id}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={fetchDashboardData}
-              className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
+              className="p-2 lg:p-3 hover:bg-slate-800 rounded-lg transition-colors"
               title="Refresh"
             >
-              <RefreshCw className={clsx("w-5 h-5 text-slate-400", loading && "animate-spin")} />
+              <RefreshCw className={clsx("w-5 h-5 lg:w-6 lg:h-6 text-slate-400", loading && "animate-spin")} />
             </button>
             <button
               onClick={logout}
-              className="p-2 hover:bg-red-500/20 rounded-lg transition-colors"
+              className="p-2 lg:p-3 hover:bg-red-500/20 rounded-lg transition-colors"
               title="Logout"
             >
-              <LogOut className="w-5 h-5 text-red-400" />
+              <LogOut className="w-5 h-5 lg:w-6 lg:h-6 text-red-400" />
             </button>
           </div>
         </header>
@@ -589,18 +589,18 @@ export default function CoordinatorDashboard() {
         ) : event ? (
           <>
             {/* Event Header */}
-            <div className="p-6 bg-slate-900/50 border border-slate-800 rounded-2xl mb-6">
-              <div className="flex items-start justify-between mb-4">
+            <div className="p-6 lg:p-8 bg-slate-900/50 border border-slate-800 rounded-2xl mb-6">
+              <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between mb-4 lg:mb-6 gap-4">
                 <div>
-                  <h1 className="text-2xl font-bold text-white mb-1">{event.event_name}</h1>
+                  <h1 className="text-2xl lg:text-3xl font-bold text-white mb-1">{event.event_name}</h1>
                   {event.slot && (
-                    <p className="text-sm text-slate-400">Slot: {event.slot}</p>
+                    <p className="text-sm lg:text-base text-slate-400">Slot: {event.slot}</p>
                   )}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span
                     className={clsx(
-                      "px-3 py-1 rounded-full text-xs font-semibold",
+                      "px-3 py-1 lg:px-4 lg:py-2 rounded-full text-xs lg:text-sm font-semibold",
                       event.completed
                         ? "bg-slate-600 text-slate-300"
                         : "bg-emerald-500 text-white"
@@ -611,7 +611,7 @@ export default function CoordinatorDashboard() {
                   {!event.completed && (
                     <button
                       onClick={closeEvent}
-                      className="px-3 py-1 rounded-full text-xs font-semibold bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors border border-red-500/30"
+                      className="px-3 py-1 lg:px-4 lg:py-2 rounded-full text-xs lg:text-sm font-semibold bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors border border-red-500/30"
                     >
                       Close Event
                     </button>
@@ -621,38 +621,83 @@ export default function CoordinatorDashboard() {
 
               {/* Stats Grid */}
               {stats && (
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="p-3 bg-slate-950/50 border border-slate-800 rounded-xl">
-                    <p className="text-xl font-bold text-indigo-400">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-4">
+                  <div className="p-3 lg:p-4 bg-slate-950/50 border border-slate-800 rounded-xl">
+                    <p className="text-xl lg:text-2xl font-bold text-indigo-400">
                       {stats.total_registrations}
                     </p>
-                    <p className="text-xs text-slate-500 uppercase tracking-wider">
+                    <p className="text-xs lg:text-sm text-slate-500 uppercase tracking-wider">
                       Registrations
                     </p>
                   </div>
-                  <div className="p-3 bg-slate-950/50 border border-slate-800 rounded-xl">
-                    <p className="text-xl font-bold text-purple-400">
+                  <div className="p-3 lg:p-4 bg-slate-950/50 border border-slate-800 rounded-xl">
+                    <p className="text-xl lg:text-2xl font-bold text-purple-400">
                       {stats.total_participants}
                     </p>
-                    <p className="text-xs text-slate-500 uppercase tracking-wider">
+                    <p className="text-xs lg:text-sm text-slate-500 uppercase tracking-wider">
                       Participants
                     </p>
                   </div>
-                  <div className="p-3 bg-slate-950/50 border border-slate-800 rounded-xl">
-                    <p className="text-xl font-bold text-emerald-400">
+                  <div className="p-3 lg:p-4 bg-slate-950/50 border border-slate-800 rounded-xl">
+                    <p className="text-xl lg:text-2xl font-bold text-emerald-400">
                       {stats.checked_in_participants}
                     </p>
-                    <p className="text-xs text-slate-500 uppercase tracking-wider">
+                    <p className="text-xs lg:text-sm text-slate-500 uppercase tracking-wider">
                       Checked In
                     </p>
                   </div>
-                  <div className="p-3 bg-slate-950/50 border border-slate-800 rounded-xl">
-                    <p className="text-xl font-bold text-amber-400">
+                  <div className="p-3 lg:p-4 bg-slate-950/50 border border-slate-800 rounded-xl">
+                    <p className="text-xl lg:text-2xl font-bold text-amber-400">
                       {stats.not_checked_in_participants}
                     </p>
-                    <p className="text-xs text-slate-500 uppercase tracking-wider">
+                    <p className="text-xs lg:text-sm text-slate-500 uppercase tracking-wider">
                       Not Checked In
                     </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Event Details */}
+              {(event.venue || event.date || event.time || event.slot) && (
+                <div className="mt-4 pt-4 border-t border-slate-800">
+                  <h4 className="text-xs lg:text-sm font-medium text-slate-500 uppercase tracking-wider mb-3">Event Details</h4>
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                    {event.venue && (
+                      <div className="flex items-center gap-2">
+                        <MapPin className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-xs text-slate-500">Venue</p>
+                          <p className="text-sm lg:text-base text-white font-medium truncate">{event.venue}</p>
+                        </div>
+                      </div>
+                    )}
+                    {event.date && (
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-xs text-slate-500">Date</p>
+                          <p className="text-sm lg:text-base text-white font-medium truncate">{event.date}</p>
+                        </div>
+                      </div>
+                    )}
+                    {event.time && (
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-purple-400 flex-shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-xs text-slate-500">Time</p>
+                          <p className="text-sm lg:text-base text-white font-medium truncate">{event.time}</p>
+                        </div>
+                      </div>
+                    )}
+                    {event.slot && (
+                      <div className="flex items-center gap-2">
+                        <Award className="w-4 h-4 text-amber-400 flex-shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-xs text-slate-500">Current Slot</p>
+                          <p className="text-sm lg:text-base text-white font-medium truncate">{event.slot}</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -663,59 +708,59 @@ export default function CoordinatorDashboard() {
               <button
                 onClick={() => setMainTab("scanner")}
                 className={clsx(
-                  "flex-1 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 min-w-[80px]",
+                  "flex-1 py-2.5 lg:py-3 rounded-lg text-sm lg:text-base font-medium transition-all flex items-center justify-center gap-2 min-w-[80px] lg:min-w-[120px]",
                   mainTab === "scanner"
                     ? "bg-amber-600 text-white shadow-lg shadow-amber-500/20"
                     : "text-slate-400 hover:text-white hover:bg-slate-800"
                 )}
               >
-                <QrCode className="w-4 h-4" />
+                <QrCode className="w-4 h-4 lg:w-5 lg:h-5" />
                 <span className="hidden sm:inline">Scanner</span>
               </button>
               <button
                 onClick={() => setMainTab("participants")}
                 className={clsx(
-                  "flex-1 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 min-w-[80px]",
+                  "flex-1 py-2.5 lg:py-3 rounded-lg text-sm lg:text-base font-medium transition-all flex items-center justify-center gap-2 min-w-[80px] lg:min-w-[120px]",
                   mainTab === "participants"
                     ? "bg-amber-600 text-white shadow-lg shadow-amber-500/20"
                     : "text-slate-400 hover:text-white hover:bg-slate-800"
                 )}
               >
-                <Users className="w-4 h-4" />
+                <Users className="w-4 h-4 lg:w-5 lg:h-5" />
                 <span className="hidden sm:inline">Participants</span>
               </button>
               <button
                 onClick={() => setMainTab("winners")}
                 className={clsx(
-                  "flex-1 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 min-w-[80px]",
+                  "flex-1 py-2.5 lg:py-3 rounded-lg text-sm lg:text-base font-medium transition-all flex items-center justify-center gap-2 min-w-[80px] lg:min-w-[120px]",
                   mainTab === "winners"
                     ? "bg-amber-600 text-white shadow-lg shadow-amber-500/20"
                     : "text-slate-400 hover:text-white hover:bg-slate-800"
                 )}
               >
-                <Trophy className="w-4 h-4" />
+                <Trophy className="w-4 h-4 lg:w-5 lg:h-5" />
                 <span className="hidden sm:inline">Winners</span>
               </button>
               <button
                 onClick={() => setMainTab("settings")}
                 className={clsx(
-                  "flex-1 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 min-w-[80px]",
+                  "flex-1 py-2.5 lg:py-3 rounded-lg text-sm lg:text-base font-medium transition-all flex items-center justify-center gap-2 min-w-[80px] lg:min-w-[120px]",
                   mainTab === "settings"
                     ? "bg-amber-600 text-white shadow-lg shadow-amber-500/20"
                     : "text-slate-400 hover:text-white hover:bg-slate-800"
                 )}
               >
-                <Settings className="w-4 h-4" />
+                <Settings className="w-4 h-4 lg:w-5 lg:h-5" />
                 <span className="hidden sm:inline">Settings</span>
               </button>
             </div>
 
             {/* Scanner Tab */}
             {mainTab === "scanner" && (
-              <div className="space-y-4">
-                <div className="p-6 bg-slate-900/50 border border-slate-800 rounded-2xl">
-                  <h3 className="text-lg font-bold text-white mb-4">Scan Ticket</h3>
-                  <p className="text-sm text-slate-400 mb-4">
+              <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0">
+                <div className="p-6 lg:p-8 bg-slate-900/50 border border-slate-800 rounded-2xl">
+                  <h3 className="text-lg lg:text-xl font-bold text-white mb-4">Scan Ticket</h3>
+                  <p className="text-sm lg:text-base text-slate-400 mb-4">
                     Enter ticket ID or scan QR code to verify attendance
                   </p>
 
@@ -726,28 +771,28 @@ export default function CoordinatorDashboard() {
                       value={ticketInput}
                       onChange={(e) => setTicketInput(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handleScan()}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 px-4 text-white placeholder:text-slate-500 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 lg:py-4 px-4 text-white placeholder:text-slate-500 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all text-sm lg:text-base"
                     />
 
                     <div className="flex gap-3">
                       <button
                         onClick={handleScan}
                         disabled={scanning || !ticketInput.trim()}
-                        className="flex-1 py-3 bg-amber-600 hover:bg-amber-500 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-xl font-medium flex items-center justify-center gap-2 transition-all"
+                        className="flex-1 py-3 lg:py-4 bg-amber-600 hover:bg-amber-500 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-xl font-medium flex items-center justify-center gap-2 transition-all text-sm lg:text-base"
                       >
                         {scanning ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <Loader2 className="w-4 h-4 lg:w-5 lg:h-5 animate-spin" />
                         ) : (
-                          <QrCode className="w-4 h-4" />
+                          <QrCode className="w-4 h-4 lg:w-5 lg:h-5" />
                         )}
                         {scanning ? "Scanning..." : "Verify Ticket"}
                       </button>
                       
                       <button
                         onClick={openCamera}
-                        className="px-4 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-medium flex items-center justify-center gap-2 transition-all"
+                        className="px-4 lg:px-6 py-3 lg:py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-medium flex items-center justify-center gap-2 transition-all"
                       >
-                        <Camera className="w-4 h-4" />
+                        <Camera className="w-4 h-4 lg:w-5 lg:h-5" />
                       </button>
                     </div>
                   </div>
@@ -757,7 +802,7 @@ export default function CoordinatorDashboard() {
                 {scanResult && (
                   <div
                     className={clsx(
-                      "p-6 rounded-2xl border",
+                      "p-6 lg:p-8 rounded-2xl border lg:col-span-2",
                       scanResult.ok
                         ? "bg-emerald-500/10 border-emerald-500/30"
                         : "bg-red-500/10 border-red-500/30"
@@ -887,17 +932,17 @@ export default function CoordinatorDashboard() {
             {mainTab === "participants" && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-lg font-bold text-white">All Participants</h3>
-                  <span className="text-sm text-slate-400">{participants.length} total</span>
+                  <h3 className="text-lg lg:text-xl font-bold text-white">All Participants</h3>
+                  <span className="text-sm lg:text-base text-slate-400">{participants.length} total</span>
                 </div>
 
                 {participants.length === 0 ? (
-                  <div className="text-center py-12 bg-slate-900/50 border border-slate-800 rounded-2xl">
-                    <Users className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-                    <p className="text-slate-400">No participants yet</p>
+                  <div className="text-center py-12 lg:py-20 bg-slate-900/50 border border-slate-800 rounded-2xl">
+                    <Users className="w-12 h-12 lg:w-16 lg:h-16 text-slate-600 mx-auto mb-3" />
+                    <p className="text-slate-400 lg:text-lg">No participants yet</p>
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-3 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
                     {teamNames.map((teamName) => {
                       const teamMembers = participantsByTeam[teamName];
                       const checkedInCount = teamMembers.filter(m => m.checked_in).length;
@@ -1003,21 +1048,21 @@ export default function CoordinatorDashboard() {
 
             {/* Winners Tab */}
             {mainTab === "winners" && (
-              <div className="space-y-6">
-                <div className="p-6 bg-slate-900/50 border border-slate-800 rounded-2xl">
-                  <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                    <Trophy className="w-5 h-5 text-amber-400" />
+              <div className="space-y-6 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0">
+                <div className="p-6 lg:p-8 bg-slate-900/50 border border-slate-800 rounded-2xl">
+                  <h3 className="text-lg lg:text-xl font-bold text-white mb-4 flex items-center gap-2">
+                    <Trophy className="w-5 h-5 lg:w-6 lg:h-6 text-amber-400" />
                     Declare Winners
                   </h3>
-                  <p className="text-sm text-slate-400 mb-6">
+                  <p className="text-sm lg:text-base text-slate-400 mb-6">
                     Select winning teams from the registered participants
                   </p>
 
                   <div className="space-y-4">
                     {/* First Place */}
                     <div className="space-y-2">
-                      <label className="flex items-center gap-2 text-sm font-medium text-slate-300">
-                        <div className="w-6 h-6 rounded-full bg-amber-500 flex items-center justify-center text-xs font-bold text-white">
+                      <label className="flex items-center gap-2 text-sm lg:text-base font-medium text-slate-300">
+                        <div className="w-6 h-6 lg:w-7 lg:h-7 rounded-full bg-amber-500 flex items-center justify-center text-xs lg:text-sm font-bold text-white">
                           1
                         </div>
                         First Place
@@ -1025,7 +1070,7 @@ export default function CoordinatorDashboard() {
                       <select
                         value={winners.first}
                         onChange={(e) => setWinners({ ...winners, first: e.target.value })}
-                        className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 lg:py-4 px-4 text-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all text-sm lg:text-base"
                       >
                         <option value="">Select winner...</option>
                         {uniqueTeams.map((teamName, idx) => (
@@ -1038,8 +1083,8 @@ export default function CoordinatorDashboard() {
 
                     {/* Second Place */}
                     <div className="space-y-2">
-                      <label className="flex items-center gap-2 text-sm font-medium text-slate-300">
-                        <div className="w-6 h-6 rounded-full bg-slate-400 flex items-center justify-center text-xs font-bold text-white">
+                      <label className="flex items-center gap-2 text-sm lg:text-base font-medium text-slate-300">
+                        <div className="w-6 h-6 lg:w-7 lg:h-7 rounded-full bg-slate-400 flex items-center justify-center text-xs lg:text-sm font-bold text-white">
                           2
                         </div>
                         Second Place
@@ -1047,7 +1092,7 @@ export default function CoordinatorDashboard() {
                       <select
                         value={winners.second}
                         onChange={(e) => setWinners({ ...winners, second: e.target.value })}
-                        className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 lg:py-4 px-4 text-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all text-sm lg:text-base"
                       >
                         <option value="">Select winner...</option>
                         {uniqueTeams.map((teamName, idx) => (
@@ -1060,8 +1105,8 @@ export default function CoordinatorDashboard() {
 
                     {/* Third Place */}
                     <div className="space-y-2">
-                      <label className="flex items-center gap-2 text-sm font-medium text-slate-300">
-                        <div className="w-6 h-6 rounded-full bg-amber-700 flex items-center justify-center text-xs font-bold text-white">
+                      <label className="flex items-center gap-2 text-sm lg:text-base font-medium text-slate-300">
+                        <div className="w-6 h-6 lg:w-7 lg:h-7 rounded-full bg-amber-700 flex items-center justify-center text-xs lg:text-sm font-bold text-white">
                           3
                         </div>
                         Third Place
@@ -1069,7 +1114,7 @@ export default function CoordinatorDashboard() {
                       <select
                         value={winners.third}
                         onChange={(e) => setWinners({ ...winners, third: e.target.value })}
-                        className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 lg:py-4 px-4 text-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all text-sm lg:text-base"
                       >
                         <option value="">Select winner...</option>
                         {uniqueTeams.map((teamName, idx) => (
@@ -1084,12 +1129,12 @@ export default function CoordinatorDashboard() {
                   <button
                     onClick={saveWinners}
                     disabled={savingWinners}
-                    className="w-full mt-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 disabled:from-slate-700 disabled:to-slate-700 text-white rounded-xl font-medium flex items-center justify-center gap-2 transition-all shadow-lg shadow-amber-500/20"
+                    className="w-full mt-6 py-3 lg:py-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 disabled:from-slate-700 disabled:to-slate-700 text-white rounded-xl font-medium flex items-center justify-center gap-2 transition-all shadow-lg shadow-amber-500/20 text-sm lg:text-base"
                   >
                     {savingWinners ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <Loader2 className="w-4 h-4 lg:w-5 lg:h-5 animate-spin" />
                     ) : (
-                      <Award className="w-4 h-4" />
+                      <Award className="w-4 h-4 lg:w-5 lg:h-5" />
                     )}
                     Save Winners
                   </button>
@@ -1097,8 +1142,8 @@ export default function CoordinatorDashboard() {
 
                 {/* Winner Preview Cards */}
                 {(winners.first || winners.second || winners.third) && (
-                  <div className="space-y-3">
-                    <h4 className="text-sm font-medium text-slate-400">Preview</h4>
+                  <div className="space-y-3 lg:space-y-4">
+                    <h4 className="text-sm lg:text-base font-medium text-slate-400">Preview</h4>
                     {winners.first && (
                       <div className="p-4 bg-gradient-to-r from-amber-500/10 to-amber-600/10 border border-amber-500/30 rounded-xl flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-amber-500 flex items-center justify-center">
@@ -1145,21 +1190,21 @@ export default function CoordinatorDashboard() {
 
             {/* Settings Tab - Event Details Manipulation */}
             {mainTab === "settings" && (
-              <div className="space-y-6">
-                <div className="p-6 bg-slate-900/50 border border-slate-800 rounded-2xl">
-                  <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                    <Settings className="w-5 h-5 text-indigo-400" />
+              <div className="space-y-6 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0">
+                <div className="p-6 lg:p-8 bg-slate-900/50 border border-slate-800 rounded-2xl">
+                  <h3 className="text-lg lg:text-xl font-bold text-white mb-4 flex items-center gap-2">
+                    <Settings className="w-5 h-5 lg:w-6 lg:h-6 text-indigo-400" />
                     Event Settings
                   </h3>
-                  <p className="text-sm text-slate-400 mb-6">
+                  <p className="text-sm lg:text-base text-slate-400 mb-6">
                     Update venue, date, time, and slot details for your event
                   </p>
 
                   <div className="space-y-4">
                     {/* Venue */}
                     <div className="space-y-2">
-                      <label className="flex items-center gap-2 text-sm font-medium text-slate-300">
-                        <MapPin className="w-4 h-4 text-emerald-400" />
+                      <label className="flex items-center gap-2 text-sm lg:text-base font-medium text-slate-300">
+                        <MapPin className="w-4 h-4 lg:w-5 lg:h-5 text-emerald-400" />
                         Venue
                       </label>
                       <input
@@ -1167,14 +1212,14 @@ export default function CoordinatorDashboard() {
                         value={eventSettings.venue}
                         onChange={(e) => setEventSettings({ ...eventSettings, venue: e.target.value })}
                         placeholder="Enter venue location..."
-                        className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 px-4 text-white placeholder:text-slate-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 lg:py-4 px-4 text-white placeholder:text-slate-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-sm lg:text-base"
                       />
                     </div>
 
                     {/* Date */}
                     <div className="space-y-2">
-                      <label className="flex items-center gap-2 text-sm font-medium text-slate-300">
-                        <Calendar className="w-4 h-4 text-blue-400" />
+                      <label className="flex items-center gap-2 text-sm lg:text-base font-medium text-slate-300">
+                        <Calendar className="w-4 h-4 lg:w-5 lg:h-5 text-blue-400" />
                         Date
                       </label>
                       <input
@@ -1182,14 +1227,14 @@ export default function CoordinatorDashboard() {
                         value={eventSettings.date}
                         onChange={(e) => setEventSettings({ ...eventSettings, date: e.target.value })}
                         placeholder="Enter date (e.g. 2026-01-25 or Jan 25)"
-                        className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 px-4 text-white placeholder:text-slate-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 lg:py-4 px-4 text-white placeholder:text-slate-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-sm lg:text-base"
                       />
                     </div>
 
                     {/* Time */}
                     <div className="space-y-2">
-                      <label className="flex items-center gap-2 text-sm font-medium text-slate-300">
-                        <Clock className="w-4 h-4 text-purple-400" />
+                      <label className="flex items-center gap-2 text-sm lg:text-base font-medium text-slate-300">
+                        <Clock className="w-4 h-4 lg:w-5 lg:h-5 text-purple-400" />
                         Time
                       </label>
                       <input
@@ -1197,14 +1242,14 @@ export default function CoordinatorDashboard() {
                         value={eventSettings.time}
                         onChange={(e) => setEventSettings({ ...eventSettings, time: e.target.value })}
                         placeholder="Enter time (e.g. 10:30 AM)"
-                        className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 px-4 text-white placeholder:text-slate-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 lg:py-4 px-4 text-white placeholder:text-slate-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-sm lg:text-base"
                       />
                     </div>
 
                     {/* Slot */}
                     <div className="space-y-2">
-                      <label className="flex items-center gap-2 text-sm font-medium text-slate-300">
-                        <Award className="w-4 h-4 text-amber-400" />
+                      <label className="flex items-center gap-2 text-sm lg:text-base font-medium text-slate-300">
+                        <Award className="w-4 h-4 lg:w-5 lg:h-5 text-amber-400" />
                         Slot
                       </label>
                       <input
@@ -1212,7 +1257,7 @@ export default function CoordinatorDashboard() {
                         value={eventSettings.slot}
                         onChange={(e) => setEventSettings({ ...eventSettings, slot: e.target.value })}
                         placeholder="Enter slot (e.g. 1, 2, 3...)"
-                        className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 px-4 text-white placeholder:text-slate-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 lg:py-4 px-4 text-white placeholder:text-slate-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-sm lg:text-base"
                       />
                     </div>
                   </div>
@@ -1220,12 +1265,12 @@ export default function CoordinatorDashboard() {
                   <button
                     onClick={saveEventSettings}
                     disabled={savingSettings}
-                    className="w-full mt-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 disabled:from-slate-700 disabled:to-slate-700 text-white rounded-xl font-medium flex items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-500/20"
+                    className="w-full mt-6 py-3 lg:py-4 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 disabled:from-slate-700 disabled:to-slate-700 text-white rounded-xl font-medium flex items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-500/20 text-sm lg:text-base"
                   >
                     {savingSettings ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <Loader2 className="w-4 h-4 lg:w-5 lg:h-5 animate-spin" />
                     ) : (
-                      <Save className="w-4 h-4" />
+                      <Save className="w-4 h-4 lg:w-5 lg:h-5" />
                     )}
                     Save Settings
                   </button>
@@ -1233,8 +1278,8 @@ export default function CoordinatorDashboard() {
 
                 {/* Current Settings Preview */}
                 {(eventSettings.venue || eventSettings.date || eventSettings.time || eventSettings.slot) && (
-                  <div className="p-6 bg-slate-900/50 border border-slate-800 rounded-2xl">
-                    <h4 className="text-sm font-medium text-slate-400 mb-4">Current Event Details</h4>
+                  <div className="p-6 lg:p-8 bg-slate-900/50 border border-slate-800 rounded-2xl">
+                    <h4 className="text-sm lg:text-base font-medium text-slate-400 mb-4">Current Event Details</h4>
                     <div className="grid grid-cols-2 gap-3">
                       {eventSettings.venue && (
                         <div className="p-3 bg-slate-950/50 border border-slate-800 rounded-xl">
@@ -1285,20 +1330,20 @@ export default function CoordinatorDashboard() {
             )}
           </>
         ) : (
-          <div className="text-center py-20 bg-slate-900/50 border border-slate-800 rounded-2xl">
-            <Calendar className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-white mb-2">No Event Assigned</h3>
-            <p className="text-slate-400">Contact admin to get assigned to an event</p>
+          <div className="text-center py-20 lg:py-32 bg-slate-900/50 border border-slate-800 rounded-2xl">
+            <Calendar className="w-16 h-16 lg:w-20 lg:h-20 text-slate-600 mx-auto mb-4" />
+            <h3 className="text-xl lg:text-2xl font-bold text-white mb-2">No Event Assigned</h3>
+            <p className="text-slate-400 lg:text-lg">Contact admin to get assigned to an event</p>
           </div>
         )}
 
-        {/* Floating QR Button */}
+        {/* Floating QR Button - Mobile Only */}
         <button
           onClick={() => {
             setMainTab("scanner");
             openCamera();
           }}
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 w-14 h-14 bg-amber-600 rounded-2xl flex items-center justify-center shadow-xl shadow-amber-500/30 hover:bg-amber-500 transition-all"
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 w-14 h-14 bg-amber-600 rounded-2xl flex items-center justify-center shadow-xl shadow-amber-500/30 hover:bg-amber-500 transition-all lg:hidden"
         >
           <Camera className="w-6 h-6 text-white" />
         </button>
@@ -1306,8 +1351,8 @@ export default function CoordinatorDashboard() {
 
       {/* Toast Notification */}
       {toast && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl shadow-xl animate-in fade-in slide-in-from-bottom-4">
-          <p className="text-sm text-white font-medium">{toast}</p>
+        <div className="fixed bottom-24 lg:bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 lg:px-6 py-2 lg:py-3 bg-slate-800 border border-slate-700 rounded-xl shadow-xl animate-in fade-in slide-in-from-bottom-4">
+          <p className="text-sm lg:text-base text-white font-medium">{toast}</p>
         </div>
       )}
     </div>
