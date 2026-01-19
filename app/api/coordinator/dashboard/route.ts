@@ -29,10 +29,27 @@ export async function GET(req: Request) {
     const { tickets, source: ticketsSource } = await fetchTicketsForEvent(eventId);
     const totalRegistrations = tickets.length;
 
+    // Count total participants (sum of all stud_ids across all tickets)
     let totalParticipants = 0;
+    const allStudentIds = new Set<string>(); // Track unique student IDs
+    
     for (const ticket of tickets) {
-      const studIds = (ticket as any).stud_id;
-      totalParticipants += Array.isArray(studIds) ? studIds.length : 0;
+      const ticketData = ticket as any;
+      const studIds = ticketData.stud_id;
+      
+      if (Array.isArray(studIds)) {
+        // Count each student in this ticket
+        totalParticipants += studIds.length;
+        
+        // Track unique students
+        studIds.forEach((id: string) => {
+          if (id) allStudentIds.add(id);
+        });
+      } else if (studIds) {
+        // Handle single stud_id (not array)
+        totalParticipants += 1;
+        allStudentIds.add(String(studIds));
+      }
     }
 
     // 4️⃣ Fetch attendance using smart fetcher
@@ -64,6 +81,12 @@ export async function GET(req: Request) {
           event: eventSource,
           tickets: ticketsSource,
           attendance: attendanceSource,
+        },
+        debug: {
+          tickets_count: tickets.length,
+          unique_students: allStudentIds.size,
+          total_participants_calculated: totalParticipants,
+          attendance_records: attendance.length,
         }
       }
     });

@@ -54,29 +54,42 @@ export async function GET(req: Request) {
       checkedInSet.add((record as any).stud_id);
     }
 
-    // 5️⃣ Collect all unique student IDs from tickets
+    // 5️⃣ Collect all student IDs from tickets (including duplicates for now)
     const studentIds: string[] = [];
+    const uniqueStudentIds = new Set<string>();
+    
     for (const ticket of tickets) {
-      const studIds = (ticket as any).stud_id ?? [];
+      const ticketData = ticket as any;
+      const studIds = ticketData.stud_id ?? [];
+      
       if (Array.isArray(studIds)) {
         for (const studId of studIds) {
-          if (studId && !studentIds.includes(studId)) {
+          if (studId) {
             studentIds.push(studId);
+            uniqueStudentIds.add(studId);
           }
         }
+      } else if (studIds) {
+        // Handle single stud_id (not array)
+        const studIdStr = String(studIds);
+        studentIds.push(studIdStr);
+        uniqueStudentIds.add(studIdStr);
       }
     }
 
     // 6️⃣ Try multiple strategies to fetch user details
     const userMap = new Map<string, { name: string; email: string; phone: string; college: string }>();
+    
+    // Use unique student IDs for fetching to avoid duplicates
+    const uniqueIds = Array.from(uniqueStudentIds);
 
-    if (studentIds.length > 0) {
+    if (uniqueIds.length > 0) {
       // Strategy 1: Query by $id (document ID)
       try {
         // Appwrite has a limit on array queries, batch if needed
         const batchSize = 100;
-        for (let i = 0; i < studentIds.length; i += batchSize) {
-          const batch = studentIds.slice(i, i + batchSize);
+        for (let i = 0; i < uniqueIds.length; i += batchSize) {
+          const batch = uniqueIds.slice(i, i + batchSize);
           const usersRes = await db.listDocuments(
             DB_ID,
             USERS_COLLECTION,
@@ -101,8 +114,8 @@ export async function GET(req: Request) {
       if (userMap.size === 0) {
         console.log("Strategy 1 found 0 users, trying Strategy 2 (query by email)...");
         try {
-          // Check if studentIds look like emails
-          const emailLikeIds = studentIds.filter(id => id.includes('@'));
+          // Check if uniqueIds look like emails
+          const emailLikeIds = uniqueIds.filter(id => id.includes('@'));
           if (emailLikeIds.length > 0) {
             for (const email of emailLikeIds) {
               const usersRes = await db.listDocuments(
@@ -127,7 +140,7 @@ export async function GET(req: Request) {
       }
 
       // Strategy 3: Fetch ALL users and match (last resort, expensive)
-      if (userMap.size === 0 && studentIds.length > 0) {
+      if (userMap.size === 0 && uniqueIds.length > 0) {
         console.log("Strategy 2 found 0 users, trying Strategy 3 (fetch all users)...");
         try {
           const allUsersRes = await db.listDocuments(
@@ -140,7 +153,7 @@ export async function GET(req: Request) {
           for (const user of allUsersRes.documents) {
             const userData = user as any;
             // Check if any studentId matches user.$id, email, or phone
-            for (const studId of studentIds) {
+            for (const studId of uniqueIds) {
               if (
                 user.$id === studId ||
                 userData.email === studId ||
@@ -201,10 +214,11 @@ export async function GET(req: Request) {
       participants,
       _debug: {
         ticketsCount: tickets.length,
-        uniqueStudentIds: studentIds.length,
+        totalStudentIds: studentIds.length,
+        uniqueStudentIds: uniqueStudentIds.size,
         usersFound: userMap.size,
         strategies: userMap.size > 0 ? "matched" : "none_matched",
-        sampleStudIds: studentIds.slice(0, 3),
+        sampleStudIds: Array.from(uniqueStudentIds).slice(0, 3),
       }
     });
 
