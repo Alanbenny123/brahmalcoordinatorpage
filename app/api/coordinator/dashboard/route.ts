@@ -35,9 +35,10 @@ export async function GET(req: Request) {
     
     for (const ticket of tickets) {
       const ticketData = ticket as any;
-      const studIds = ticketData.stud_id;
+      // Try multiple possible field names for student IDs
+      const studIds = ticketData.stud_id || ticketData.studId || ticketData.student_ids || ticketData.studentIds;
       
-      if (Array.isArray(studIds)) {
+      if (Array.isArray(studIds) && studIds.length > 0) {
         // Count each student in this ticket
         totalParticipants += studIds.length;
         
@@ -87,6 +88,15 @@ export async function GET(req: Request) {
           unique_students: allStudentIds.size,
           total_participants_calculated: totalParticipants,
           attendance_records: attendance.length,
+          sample_ticket: tickets.length > 0 ? {
+            has_stud_id: !!(tickets[0] as any).stud_id,
+            has_studId: !!(tickets[0] as any).studId,
+            has_student_ids: !!(tickets[0] as any).student_ids,
+            stud_id_type: typeof (tickets[0] as any).stud_id,
+            stud_id_is_array: Array.isArray((tickets[0] as any).stud_id),
+            stud_id_length: Array.isArray((tickets[0] as any).stud_id) ? (tickets[0] as any).stud_id.length : 'not_array',
+            all_keys: Object.keys(tickets[0]),
+          } : null,
         }
       }
     });
