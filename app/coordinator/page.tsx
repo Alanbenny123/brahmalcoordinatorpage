@@ -1226,7 +1226,7 @@ export default function CoordinatorDashboard() {
                         type="text"
                         value={eventSettings.date}
                         onChange={(e) => setEventSettings({ ...eventSettings, date: e.target.value })}
-                        placeholder="Enter date (e.g. 2026-01-25 or Jan 25)"
+                        placeholder="Enter date..."
                         className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 lg:py-4 px-4 text-white placeholder:text-slate-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-sm lg:text-base"
                       />
                     </div>
