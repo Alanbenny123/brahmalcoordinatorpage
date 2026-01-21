@@ -346,11 +346,16 @@ export default function CoordinatorDashboard() {
     }
   }
 
-  // Close event manually
-  async function closeEvent() {
-    if (!coordinator?.id) return;
+  // Toggle event status (close/reopen)
+  async function toggleEventStatus() {
+    if (!coordinator?.id || !event) return;
     
-    const confirmed = confirm("Are you sure you want to close this event? This action cannot be undone.");
+    const isClosing = !event.completed;
+    const confirmMessage = isClosing 
+      ? "Are you sure you want to close this event?" 
+      : "Are you sure you want to reopen this event?";
+    
+    const confirmed = confirm(confirmMessage);
     if (!confirmed) return;
 
     setClosingEvent(true);
@@ -359,22 +364,25 @@ export default function CoordinatorDashboard() {
       const res = await fetch("/api/coordinator/update-event", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ completed: true }),
+        body: JSON.stringify({ completed: isClosing }),
       });
 
       const data = await res.json();
       if (data.ok) {
-        setToast("Event closed successfully! ✓");
+        const successMessage = isClosing ? "Event closed successfully! ✓" : "Event reopened successfully! ✓";
+        setToast(successMessage);
         setTimeout(() => setToast(null), 3000);
         // Refresh dashboard data
         fetchDashboardData();
       } else {
-        setToast(data.error || "Failed to close event");
+        const errorMessage = isClosing ? "Failed to close event" : "Failed to reopen event";
+        setToast(data.error || errorMessage);
         setTimeout(() => setToast(null), 3000);
       }
     } catch (error) {
-      console.error("Failed to close event:", error);
-      setToast("Failed to close event");
+      console.error("Failed to toggle event status:", error);
+      const errorMessage = isClosing ? "Failed to close event" : "Failed to reopen event";
+      setToast(errorMessage);
       setTimeout(() => setToast(null), 3000);
     } finally {
       setClosingEvent(false);
@@ -608,14 +616,19 @@ export default function CoordinatorDashboard() {
                   >
                     {event.completed ? "Completed" : "Active"}
                   </span>
-                  {!event.completed && (
-                    <button
-                      onClick={closeEvent}
-                      className="px-3 py-1 lg:px-4 lg:py-2 rounded-full text-xs lg:text-sm font-semibold bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors border border-red-500/30"
-                    >
-                      Close Event
-                    </button>
-                  )}
+                  <button
+                    onClick={toggleEventStatus}
+                    disabled={closingEvent}
+                    className={clsx(
+                      "px-3 py-1 lg:px-4 lg:py-2 rounded-full text-xs lg:text-sm font-semibold transition-colors border",
+                      event.completed
+                        ? "bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border-emerald-500/30"
+                        : "bg-red-500/20 text-red-400 hover:bg-red-500/30 border-red-500/30",
+                      closingEvent && "opacity-50 cursor-not-allowed"
+                    )}
+                  >
+                    {closingEvent ? "Processing..." : event.completed ? "Reopen Event" : "Close Event"}
+                  </button>
                 </div>
               </div>
 
