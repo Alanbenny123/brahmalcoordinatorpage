@@ -144,5 +144,4 @@ npx tsc --noEmit
 ```
 
 ## License
-
 Private project for Brahma event management.
