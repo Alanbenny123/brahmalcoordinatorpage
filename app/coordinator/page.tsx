@@ -1296,13 +1296,7 @@ export default function CoordinatorDashboard() {
                             <Calendar className="w-3 h-3 text-blue-400" />
                             <p className="text-xs text-slate-500 uppercase tracking-wider">Date</p>
                           </div>
-                          <p className="text-sm font-medium text-white">
-                            {new Date(eventSettings.date).toLocaleDateString('en-US', { 
-                              weekday: 'short', 
-                              month: 'short', 
-                              day: 'numeric' 
-                            })}
-                          </p>
+                          <p className="text-sm font-medium text-white">{eventSettings.date}</p>
                         </div>
                       )}
                       {eventSettings.time && (
