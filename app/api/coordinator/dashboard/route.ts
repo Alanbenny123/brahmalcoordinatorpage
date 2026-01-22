@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getBackendDB } from "@/lib/appwrite/backend";
-import { fetchTicketsForEvent, fetchAttendanceForEvent } from "@/lib/data-fetcher";
+import { Query } from "node-appwrite";
+
+const DB_ID = process.env.APPWRITE_DATABASE_ID!;
+const EVENTS_COLLECTION = process.env.APPWRITE_EVENTS_COLLECTION_ID!;
+const TICKETS_COLLECTION = process.env.APPWRITE_TICKETS_COLLECTION_ID!;
+const ATTENDANCE_COLLECTION = process.env.APPWRITE_ATTENDANCE_COLLECTION_ID!;
 
 export async function GET(req: Request) {
   try {
@@ -16,14 +21,12 @@ export async function GET(req: Request) {
       );
     }
 
+    const db = getBackendDB();
+
     // 2️⃣ Fetch event directly from Appwrite (source of truth) for fresh data
     let event;
     try {
-      event = await getBackendDB().getDocument(
-        process.env.APPWRITE_DATABASE_ID!,
-        process.env.APPWRITE_EVENTS_COLLECTION_ID!,
-        eventId
-      );
+      event = await db.getDocument(DB_ID, EVENTS_COLLECTION, eventId);
     } catch (error) {
       return NextResponse.json(
         { ok: false, error: "Event not found" },
@@ -31,8 +34,13 @@ export async function GET(req: Request) {
       );
     }
 
-    // 3️⃣ Fetch tickets using smart fetcher
-    const { tickets, source: ticketsSource } = await fetchTicketsForEvent(eventId);
+    // 3️⃣ Fetch tickets directly from Appwrite
+    const ticketsRes = await db.listDocuments(
+      DB_ID,
+      TICKETS_COLLECTION,
+      [Query.equal('event_id', eventId), Query.limit(500)]
+    );
+    const tickets = ticketsRes.documents;
     const totalRegistrations = tickets.length;
 
     // Count total participants (sum of all stud_ids across all tickets)
@@ -41,8 +49,8 @@ export async function GET(req: Request) {
     
     for (const ticket of tickets) {
       const ticketData = ticket as any;
-      // Try multiple possible field names for student IDs
-      const studIds = ticketData.stud_id || ticketData.studId || ticketData.student_ids || ticketData.studentIds;
+      // Use stud_id field (matches Appwrite schema: stud_id[] string array)
+      const studIds = ticketData.stud_id ?? [];
       
       if (Array.isArray(studIds) && studIds.length > 0) {
         // Count each student in this ticket
@@ -52,16 +60,20 @@ export async function GET(req: Request) {
         studIds.forEach((id: string) => {
           if (id) allStudentIds.add(id);
         });
-      } else if (studIds) {
+      } else if (studIds && !Array.isArray(studIds)) {
         // Handle single stud_id (not array)
         totalParticipants += 1;
         allStudentIds.add(String(studIds));
       }
     }
 
-    // 4️⃣ Fetch attendance using smart fetcher
-    const { attendance, source: attendanceSource } = await fetchAttendanceForEvent(eventId);
-    const checkedInParticipants = attendance.length;
+    // 4️⃣ Fetch attendance directly from Appwrite
+    const attendanceRes = await db.listDocuments(
+      DB_ID,
+      ATTENDANCE_COLLECTION,
+      [Query.equal('event_id', eventId), Query.limit(500)]
+    );
+    const checkedInParticipants = attendanceRes.documents.length;
 
     // 5️⃣ Final response with source tracking
     const eventData = event as any;
@@ -86,22 +98,20 @@ export async function GET(req: Request) {
       _meta: {
         sources: {
           event: 'appwrite',
-          tickets: ticketsSource,
-          attendance: attendanceSource,
+          tickets: 'appwrite',
+          attendance: 'appwrite',
         },
         debug: {
           tickets_count: tickets.length,
           unique_students: allStudentIds.size,
           total_participants_calculated: totalParticipants,
-          attendance_records: attendance.length,
+          attendance_records: checkedInParticipants,
           sample_ticket: tickets.length > 0 ? {
             has_stud_id: !!(tickets[0] as any).stud_id,
-            has_studId: !!(tickets[0] as any).studId,
-            has_student_ids: !!(tickets[0] as any).student_ids,
             stud_id_type: typeof (tickets[0] as any).stud_id,
             stud_id_is_array: Array.isArray((tickets[0] as any).stud_id),
             stud_id_length: Array.isArray((tickets[0] as any).stud_id) ? (tickets[0] as any).stud_id.length : 'not_array',
-            all_keys: Object.keys(tickets[0]),
+            stud_id_value: (tickets[0] as any).stud_id,
           } : null,
         }
       }
