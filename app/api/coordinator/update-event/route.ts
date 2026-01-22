@@ -64,10 +64,10 @@ export async function POST(req: Request) {
       updated: updateData,
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Update event error:", error);
     return NextResponse.json(
-      { ok: false, error: "Failed to update event" },
+      { ok: false, error: error?.message || "Failed to update event" },
       { status: 500 }
     );
   }
