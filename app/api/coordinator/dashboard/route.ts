@@ -68,7 +68,7 @@ export async function GET(req: Request) {
         venue: eventData.venue || "",
         date: eventData.date || "",
         time: eventData.time || "",
-        slot: eventData.slot !== undefined && eventData.slot !== null ? String(eventData.slot) : "",
+        slots: eventData.slots || 0,
       },
       stats: {
         total_registrations: totalRegistrations,

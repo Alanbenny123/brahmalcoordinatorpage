@@ -34,7 +34,7 @@ interface EventData {
   venue?: string;
   date?: string;
   time?: string;
-  slot?: string;
+  slots?: number;
 }
 
 interface Participant {
@@ -599,8 +599,8 @@ export default function CoordinatorDashboard() {
               <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between mb-4 lg:mb-6 gap-4">
                 <div>
                   <h1 className="text-2xl lg:text-3xl font-bold text-white mb-1">{event.event_name}</h1>
-                  {event.slot && (
-                    <p className="text-sm lg:text-base text-slate-400">Slot: {event.slot}</p>
+                  {event.slots && (
+                    <p className="text-sm lg:text-base text-slate-400">Slots: {event.slots}</p>
                   )}
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
@@ -669,7 +669,7 @@ export default function CoordinatorDashboard() {
               )}
 
               {/* Event Details */}
-              {(event.venue || event.date || event.time || event.slot) && (
+              {(event.venue || event.date || event.time || event.slots) && (
                 <div className="mt-4 pt-4 border-t border-slate-800">
                   <h4 className="text-xs lg:text-sm font-medium text-slate-500 uppercase tracking-wider mb-3">Event Details</h4>
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -700,12 +700,12 @@ export default function CoordinatorDashboard() {
                         </div>
                       </div>
                     )}
-                    {event.slot && (
+                    {event.slots && (
                       <div className="flex items-center gap-2">
                         <Award className="w-4 h-4 text-amber-400 flex-shrink-0" />
                         <div className="min-w-0">
-                          <p className="text-xs text-slate-500">Current Slot</p>
-                          <p className="text-sm lg:text-base text-white font-medium truncate">{event.slot}</p>
+                          <p className="text-xs text-slate-500">Slots</p>
+                          <p className="text-sm lg:text-base text-white font-medium truncate">{event.slots}</p>
                         </div>
                       </div>
                     )}
