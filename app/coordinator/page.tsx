@@ -82,6 +82,7 @@ export default function CoordinatorDashboard() {
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [scanning, setScanning] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [markingAttendance, setMarkingAttendance] = useState<Set<string>>(new Set());
 
   // Winners state
   const [winners, setWinners] = useState<{
@@ -247,6 +248,9 @@ export default function CoordinatorDashboard() {
   async function markAttendance(studId: string) {
     if (!coordinator?.id || !ticketInput.trim()) return;
 
+    // Add to loading set
+    setMarkingAttendance(prev => new Set(prev).add(studId));
+
     try {
       const res = await fetch("/api/tickets/mark-attendance", {
         method: "POST",
@@ -261,12 +265,23 @@ export default function CoordinatorDashboard() {
       const data = await res.json();
 
       if (data.ok) {
-        setToast(`${studId} checked in ✓`);
+        // Immediately update local state to show "Marked"
+        setScanResult(prev => {
+          if (!prev || !prev.members) return prev;
+          return {
+            ...prev,
+            members: prev.members.map(member =>
+              member.stud_id === studId
+                ? { ...member, present: true }
+                : member
+            ),
+          };
+        });
+
+        setToast(`Marked successfully ✓`);
         setTimeout(() => setToast(null), 3000);
 
-        // Re-scan to update status
-        handleScan();
-        // Refresh dashboard data
+        // Refresh dashboard data in background
         fetchDashboardData();
       } else {
         setToast(data.error || "Failed to mark attendance");
@@ -276,6 +291,13 @@ export default function CoordinatorDashboard() {
       console.error("Failed to mark attendance:", error);
       setToast("Failed to mark attendance");
       setTimeout(() => setToast(null), 3000);
+    } finally {
+      // Remove from loading set
+      setMarkingAttendance(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(studId);
+        return newSet;
+      });
     }
   }
 
@@ -861,8 +883,14 @@ export default function CoordinatorDashboard() {
                               <span className="text-white text-sm">{member.name}</span>
                             </div>
                             {member.present ? (
-                              <span className="text-xs text-emerald-400 font-medium px-2 py-1 bg-emerald-500/10 rounded-lg">
-                                ✓ Present
+                              <span className="text-xs text-emerald-400 font-medium px-3 py-1.5 bg-emerald-500/20 border border-emerald-500/30 rounded-lg flex items-center gap-1">
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                Marked
+                              </span>
+                            ) : markingAttendance.has(member.stud_id) ? (
+                              <span className="text-xs text-amber-400 font-medium px-3 py-1.5 bg-amber-500/10 rounded-lg flex items-center gap-1">
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                Marking...
                               </span>
                             ) : (
                               <button
