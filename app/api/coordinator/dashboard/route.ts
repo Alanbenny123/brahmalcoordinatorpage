@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { fetchEvent, fetchTicketsForEvent, fetchAttendanceForEvent } from "@/lib/data-fetcher";
+import { getBackendDB } from "@/lib/appwrite/backend";
+import { fetchTicketsForEvent, fetchAttendanceForEvent } from "@/lib/data-fetcher";
 
 export async function GET(req: Request) {
   try {
@@ -15,10 +16,15 @@ export async function GET(req: Request) {
       );
     }
 
-    // 2️⃣ Fetch event using smart fetcher (Firebase first, Appwrite fallback)
-    const { event, source: eventSource, success: eventSuccess } = await fetchEvent(eventId);
-
-    if (!eventSuccess || !event) {
+    // 2️⃣ Fetch event directly from Appwrite (source of truth) for fresh data
+    let event;
+    try {
+      event = await getBackendDB().getDocument(
+        process.env.APPWRITE_DATABASE_ID!,
+        process.env.APPWRITE_EVENTS_COLLECTION_ID!,
+        eventId
+      );
+    } catch (error) {
       return NextResponse.json(
         { ok: false, error: "Event not found" },
         { status: 404 }
@@ -79,7 +85,7 @@ export async function GET(req: Request) {
       },
       _meta: {
         sources: {
-          event: eventSource,
+          event: 'appwrite',
           tickets: ticketsSource,
           attendance: attendanceSource,
         },
