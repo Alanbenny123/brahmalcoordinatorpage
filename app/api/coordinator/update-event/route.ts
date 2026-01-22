@@ -6,6 +6,7 @@ import { z } from "zod";
 const UpdateEventSchema = z.object({
   venue: z.string().optional(),
   time: z.string().optional(),
+  slots: z.string().optional(),
   completed: z.boolean().optional(),
 });
 
@@ -33,12 +34,13 @@ export async function POST(req: Request) {
       );
     }
 
-    const { venue, time, completed } = result.data;
+    const { venue, time, slots, completed } = result.data;
 
     // 3️⃣ Build update object (only include provided fields)
     const updateData: Record<string, string | boolean | number> = {};
     if (venue !== undefined) updateData.venue = venue;
     if (time !== undefined) updateData.time = time;
+    if (slots !== undefined && slots !== "") updateData.slots = parseInt(slots, 10);
     if (completed !== undefined) updateData.completed = completed;
 
     if (Object.keys(updateData).length === 0) {
@@ -96,6 +98,7 @@ export async function GET(req: Request) {
       event: {
         venue: event.venue || "",
         time: event.time || "",
+        slots: event.slots || 0,
       },
     });
 

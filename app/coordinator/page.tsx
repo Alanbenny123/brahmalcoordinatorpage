@@ -95,6 +95,7 @@ export default function CoordinatorDashboard() {
   const [eventSettings, setEventSettings] = useState({
     venue: "",
     time: "",
+    slots: "",
   });
   const [savingSettings, setSavingSettings] = useState(false);
   const [closingEvent, setClosingEvent] = useState(false);
@@ -198,6 +199,7 @@ export default function CoordinatorDashboard() {
         setEventSettings({
           venue: statsData.event.venue || "",
           time: statsData.event.time || "",
+          slots: statsData.event.slots?.toString() || "",
         });
       }
 
@@ -1206,7 +1208,7 @@ export default function CoordinatorDashboard() {
                     Event Settings
                   </h3>
                   <p className="text-sm lg:text-base text-slate-400 mb-6">
-                    Update venue and time details for your event
+                    Update venue, time, and slots details for your event
                   </p>
 
                   <div className="space-y-4">
@@ -1239,6 +1241,21 @@ export default function CoordinatorDashboard() {
                         className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 lg:py-4 px-4 text-white placeholder:text-slate-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-sm lg:text-base"
                       />
                     </div>
+
+                    {/* Slots */}
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-2 text-sm lg:text-base font-medium text-slate-300">
+                        <Award className="w-4 h-4 lg:w-5 lg:h-5 text-amber-400" />
+                        Slots
+                      </label>
+                      <input
+                        type="number"
+                        value={eventSettings.slots}
+                        onChange={(e) => setEventSettings({ ...eventSettings, slots: e.target.value })}
+                        placeholder="Enter number of slots"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 lg:py-4 px-4 text-white placeholder:text-slate-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-sm lg:text-base"
+                      />
+                    </div>
                   </div>
 
                   <button
@@ -1256,7 +1273,7 @@ export default function CoordinatorDashboard() {
                 </div>
 
                 {/* Current Settings Preview */}
-                {(eventSettings.venue || eventSettings.time) && (
+                {(eventSettings.venue || eventSettings.time || eventSettings.slots) && (
                   <div className="p-6 lg:p-8 bg-slate-900/50 border border-slate-800 rounded-2xl">
                     <h4 className="text-sm lg:text-base font-medium text-slate-400 mb-4">Current Event Details</h4>
                     <div className="grid grid-cols-2 gap-3">
@@ -1277,7 +1294,16 @@ export default function CoordinatorDashboard() {
                           </div>
                           <p className="text-sm font-medium text-white">{eventSettings.time}</p>
                         </div>
-                    )}
+                      )}
+                      {eventSettings.slots && (
+                        <div className="p-3 bg-slate-950/50 border border-slate-800 rounded-xl">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Award className="w-3 h-3 text-amber-400" />
+                            <p className="text-xs text-slate-500 uppercase tracking-wider">Slots</p>
+                          </div>
+                          <p className="text-sm font-medium text-white">{eventSettings.slots}</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
