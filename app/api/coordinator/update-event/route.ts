@@ -4,8 +4,7 @@ import { getBackendDB } from "@/lib/appwrite/backend";
 import { z } from "zod";
 
 const UpdateEventSchema = z.object({
-  venue: z.string().min(1, "Venue is required").optional(),
-  date: z.string().optional(),
+  venue: z.string().optional(),
   time: z.string().optional(),
   slot: z.string().optional(),
   completed: z.boolean().optional(),
@@ -35,12 +34,11 @@ export async function POST(req: Request) {
       );
     }
 
-    const { venue, date, time, slot, completed } = result.data;
+    const { venue, time, slot, completed } = result.data;
 
     // 3️⃣ Build update object (only include provided fields)
-    const updateData: Record<string, string | boolean> = {};
+    const updateData: Record<string, string | boolean | number> = {};
     if (venue !== undefined) updateData.venue = venue;
-    if (date !== undefined) updateData.date = date;
     if (time !== undefined) updateData.time = time;
     if (slot !== undefined) updateData.slot = slot;
     if (completed !== undefined) updateData.completed = completed;
@@ -99,7 +97,6 @@ export async function GET(req: Request) {
       ok: true,
       event: {
         venue: event.venue || "",
-        date: event.date || "",
         time: event.time || "",
         slot: event.slot || "",
       },
