@@ -94,7 +94,6 @@ export default function CoordinatorDashboard() {
   // Event settings state
   const [eventSettings, setEventSettings] = useState({
     venue: "",
-    date: "",
     time: "",
     slot: "",
   });
@@ -199,7 +198,6 @@ export default function CoordinatorDashboard() {
         // Set event settings from dashboard data as initial values
         setEventSettings({
           venue: statsData.event.venue || "",
-          date: statsData.event.date || "",
           time: statsData.event.time || "",
           slot: statsData.event.slot || "",
         });
@@ -1210,7 +1208,7 @@ export default function CoordinatorDashboard() {
                     Event Settings
                   </h3>
                   <p className="text-sm lg:text-base text-slate-400 mb-6">
-                    Update venue, date, time, and slot details for your event
+                    Update venue, time, and slot details for your event
                   </p>
 
                   <div className="space-y-4">
@@ -1225,21 +1223,6 @@ export default function CoordinatorDashboard() {
                         value={eventSettings.venue}
                         onChange={(e) => setEventSettings({ ...eventSettings, venue: e.target.value })}
                         placeholder="Enter venue location..."
-                        className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 lg:py-4 px-4 text-white placeholder:text-slate-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-sm lg:text-base"
-                      />
-                    </div>
-
-                    {/* Date */}
-                    <div className="space-y-2">
-                      <label className="flex items-center gap-2 text-sm lg:text-base font-medium text-slate-300">
-                        <Calendar className="w-4 h-4 lg:w-5 lg:h-5 text-blue-400" />
-                        Date
-                      </label>
-                      <input
-                        type="text"
-                        value={eventSettings.date}
-                        onChange={(e) => setEventSettings({ ...eventSettings, date: e.target.value })}
-                        placeholder="Enter date..."
                         className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 lg:py-4 px-4 text-white placeholder:text-slate-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-sm lg:text-base"
                       />
                     </div>
@@ -1290,7 +1273,7 @@ export default function CoordinatorDashboard() {
                 </div>
 
                 {/* Current Settings Preview */}
-                {(eventSettings.venue || eventSettings.date || eventSettings.time || eventSettings.slot) && (
+                {(eventSettings.venue || eventSettings.time || eventSettings.slot) && (
                   <div className="p-6 lg:p-8 bg-slate-900/50 border border-slate-800 rounded-2xl">
                     <h4 className="text-sm lg:text-base font-medium text-slate-400 mb-4">Current Event Details</h4>
                     <div className="grid grid-cols-2 gap-3">
@@ -1301,15 +1284,6 @@ export default function CoordinatorDashboard() {
                             <p className="text-xs text-slate-500 uppercase tracking-wider">Venue</p>
                           </div>
                           <p className="text-sm font-medium text-white">{eventSettings.venue}</p>
-                        </div>
-                      )}
-                      {eventSettings.date && (
-                        <div className="p-3 bg-slate-950/50 border border-slate-800 rounded-xl">
-                          <div className="flex items-center gap-2 mb-1">
-                            <Calendar className="w-3 h-3 text-blue-400" />
-                            <p className="text-xs text-slate-500 uppercase tracking-wider">Date</p>
-                          </div>
-                          <p className="text-sm font-medium text-white">{eventSettings.date}</p>
                         </div>
                       )}
                       {eventSettings.time && (
