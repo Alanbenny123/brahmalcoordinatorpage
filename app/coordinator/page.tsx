@@ -625,7 +625,7 @@ export default function CoordinatorDashboard() {
                       closingEvent && "opacity-50 cursor-not-allowed"
                     )}
                   >
-                    {closingEvent ? "Processing..." : event.completed ? "Reopen Event" : "Close Event"}
+                    {closingEvent ? "Processing..." : event.completed ? "Open Event" : "Close Event"}
                   </button>
                 </div>
               </div>
