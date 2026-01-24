@@ -61,10 +61,9 @@ export async function POST(req: Request) {
     const MAIN_COORDINATOR_ID = process.env.MAIN_COORDINATOR_ID || "admin";
     
     // Bcrypt hash of password: $Fgff7#bd32
-    // To generate a new hash, run: node -e "console.log(require('bcryptjs').hashSync('YourNewPassword', 10))"
-    const MAIN_COORDINATOR_PASS = process.env.MAIN_COORDINATOR_PASS || "$2b$10$lPH9Vdi8MUeMLNktgJuR8exQJoV/fz.r5hzXP/q4fsMVx2U.AmF2m";
-    // Current password: $Fgff7#bd32
-
+    // To generate a new hash, run: node generate-hash.js 'YourNewPassword'
+    const MAIN_COORDINATOR_PASS = process.env.MAIN_COORDINATOR_PASS || "$2b$10$jmcRdLNVttvAdyBsyjO/zOPvtS/tcDLvSvnnFyZMea8vDRn4QnqL2";
+  
     // 5. Verify credentials (constant-time comparison)
     const idMatch = coordinator_id === MAIN_COORDINATOR_ID;
     
