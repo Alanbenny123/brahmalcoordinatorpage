@@ -60,6 +60,7 @@ export default function CoordinatorOverview() {
   const [participants, setParticipants] = useState<Record<string, Participant[]>>({});
   const [expandedTeams, setExpandedTeams] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<"name" | "category" | "date" | "registrations" | "slots">("name");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
@@ -137,14 +138,19 @@ export default function CoordinatorOverview() {
   const totalParticipants = events.reduce((sum, e) => sum + e.stats.total_participants, 0);
   const totalCheckedIn = events.reduce((sum, e) => sum + e.stats.checked_in_participants, 0);
 
-  // Filter events based on search query
+  // Filter events based on search query and category
   const filteredEvents = events.filter((event) => {
     const searchLower = searchQuery.toLowerCase();
-    return (
+    const matchesSearch = 
       event.event_name.toLowerCase().includes(searchLower) ||
       event.category?.toLowerCase().includes(searchLower) ||
-      event.venue?.toLowerCase().includes(searchLower)
-    );
+      event.venue?.toLowerCase().includes(searchLower);
+    
+    const matchesCategory = 
+      categoryFilter === "all" || 
+      event.category?.toLowerCase() === categoryFilter.toLowerCase();
+    
+    return matchesSearch && matchesCategory;
   });
 
   // Sort events
@@ -248,9 +254,9 @@ export default function CoordinatorOverview() {
           </div>
         </div>
 
-        {/* Search and Sort Controls */}
+        {/* Search and Filter Controls */}
         <div className="mb-6 p-4 lg:p-6 bg-slate-900/50 border border-slate-800 rounded-2xl">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Search */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-500" />
@@ -271,14 +277,29 @@ export default function CoordinatorOverview() {
               )}
             </div>
 
+            {/* Category Filter */}
+            <div className="relative">
+              <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-500" />
+              <select
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 bg-slate-950/50 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-amber-500 transition-colors appearance-none cursor-pointer"
+              >
+                <option value="all">All Categories</option>
+                <option value="ashwamedha">Ashwamedha</option>
+                <option value="brahma (general)">Brahma (General)</option>
+                <option value="brahma (technical)">Brahma (Technical)</option>
+                <option value="brahma (cultural)">Brahma (Cultural)</option>
+              </select>
+            </div>
+
             {/* Sort Controls */}
             <div className="flex gap-2">
               <div className="flex-1 relative">
-                <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-500" />
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as any)}
-                  className="w-full pl-10 pr-4 py-3 bg-slate-950/50 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-amber-500 transition-colors appearance-none cursor-pointer"
+                  className="w-full px-4 py-3 bg-slate-950/50 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-amber-500 transition-colors appearance-none cursor-pointer"
                 >
                   <option value="name">Sort by Name</option>
                   <option value="category">Sort by Category</option>
