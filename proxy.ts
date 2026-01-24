@@ -44,13 +44,9 @@ export function proxy(request: NextRequest) {
         return NextResponse.redirect(new URL('/coordinator', request.url));
     }
 
-    // Redirect to overview if accessing coordinator root with session
-    if (path === '/coordinator' && coordSession) {
-        const coordEvent = request.cookies.get('coord_event');
-        // If they have an event assigned, stay on event dashboard, else go to overview
-        if (!coordEvent?.value && coordType?.value !== 'main') {
-            return NextResponse.redirect(new URL('/coordinator/overview', request.url));
-        }
+    // Main coordinator accessing /coordinator should go to overview
+    if (path === '/coordinator' && coordSession && coordType?.value === 'main') {
+        return NextResponse.redirect(new URL('/coordinator/overview', request.url));
     }
 
     // Redirect to appropriate dashboard if already logged in and visiting login pages
