@@ -18,8 +18,13 @@ export function proxy(request: NextRequest) {
         return NextResponse.redirect(new URL('/coordinator/login', request.url));
     }
 
-    // Protect coordinator routes (except login pages)
-    if (path.startsWith('/coordinator') && path !== '/coordinator/login' && path !== '/coordinator/main-login') {
+    // Allow access to login pages without clearing cookies (users can switch)
+    if (path === '/coordinator/login' || path === '/coordinator/main-login') {
+        return NextResponse.next();
+    }
+
+    // Protect coordinator routes
+    if (path.startsWith('/coordinator')) {
         if (!coordSession) {
             const response = NextResponse.redirect(new URL('/coordinator/login', request.url));
             response.cookies.delete('coord_session');

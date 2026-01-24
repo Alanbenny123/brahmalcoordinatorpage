@@ -17,6 +17,9 @@ import {
   ChevronUp,
   BarChart3,
   Eye,
+  Search,
+  Filter,
+  X,
 } from "lucide-react";
 
 interface EventStats {
@@ -56,6 +59,9 @@ export default function CoordinatorOverview() {
   const [loadingParticipants, setLoadingParticipants] = useState<string | null>(null);
   const [participants, setParticipants] = useState<Record<string, Participant[]>>({});
   const [expandedTeams, setExpandedTeams] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<"name" | "category" | "date" | "registrations" | "slots">("name");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   useEffect(() => {
     fetchAllEvents();
@@ -130,6 +136,41 @@ export default function CoordinatorOverview() {
   const totalRegistrations = events.reduce((sum, e) => sum + e.stats.total_registrations, 0);
   const totalParticipants = events.reduce((sum, e) => sum + e.stats.total_participants, 0);
   const totalCheckedIn = events.reduce((sum, e) => sum + e.stats.checked_in_participants, 0);
+
+  // Filter events based on search query
+  const filteredEvents = events.filter((event) => {
+    const searchLower = searchQuery.toLowerCase();
+    return (
+      event.event_name.toLowerCase().includes(searchLower) ||
+      event.category?.toLowerCase().includes(searchLower) ||
+      event.venue?.toLowerCase().includes(searchLower)
+    );
+  });
+
+  // Sort events
+  const sortedEvents = [...filteredEvents].sort((a, b) => {
+    let compareValue = 0;
+    
+    switch (sortBy) {
+      case "name":
+        compareValue = a.event_name.localeCompare(b.event_name);
+        break;
+      case "category":
+        compareValue = (a.category || "").localeCompare(b.category || "");
+        break;
+      case "date":
+        compareValue = (a.date || "").localeCompare(b.date || "");
+        break;
+      case "registrations":
+        compareValue = a.stats.total_registrations - b.stats.total_registrations;
+        break;
+      case "slots":
+        compareValue = a.remaining_slots - b.remaining_slots;
+        break;
+    }
+    
+    return sortOrder === "asc" ? compareValue : -compareValue;
+  });
 
   if (loading) {
     return (
@@ -207,21 +248,77 @@ export default function CoordinatorOverview() {
           </div>
         </div>
 
+        {/* Search and Sort Controls */}
+        <div className="mb-6 p-4 lg:p-6 bg-slate-900/50 border border-slate-800 rounded-2xl">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-500" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by event name, category, or venue..."
+                className="w-full pl-10 pr-10 py-3 bg-slate-950/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 transition-colors"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 hover:bg-slate-800 rounded transition-colors"
+                >
+                  <X className="w-4 h-4 text-slate-500" />
+                </button>
+              )}
+            </div>
+
+            {/* Sort Controls */}
+            <div className="flex gap-2">
+              <div className="flex-1 relative">
+                <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-500" />
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as any)}
+                  className="w-full pl-10 pr-4 py-3 bg-slate-950/50 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-amber-500 transition-colors appearance-none cursor-pointer"
+                >
+                  <option value="name">Sort by Name</option>
+                  <option value="category">Sort by Category</option>
+                  <option value="date">Sort by Date</option>
+                  <option value="registrations">Sort by Registrations</option>
+                  <option value="slots">Sort by Remaining Slots</option>
+                </select>
+              </div>
+              <button
+                onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+                className="p-3 bg-slate-950/50 border border-slate-700 rounded-xl hover:bg-slate-800 transition-colors"
+                title={`Sort ${sortOrder === "asc" ? "Descending" : "Ascending"}`}
+              >
+                {sortOrder === "asc" ? (
+                  <ChevronUp className="w-5 h-5 text-amber-400" />
+                ) : (
+                  <ChevronDown className="w-5 h-5 text-amber-400" />
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+
         {/* Events List */}
         <div className="space-y-4">
           <h2 className="text-lg lg:text-xl font-bold text-white flex items-center gap-2">
             <Calendar className="w-5 h-5 lg:w-6 lg:h-6 text-amber-400" />
-            All Events ({events.length})
+            All Events ({sortedEvents.length} {sortedEvents.length !== events.length && `of ${events.length}`})
           </h2>
 
-          {events.length === 0 ? (
+          {sortedEvents.length === 0 ? (
             <div className="text-center py-12 lg:py-20 bg-slate-900/50 border border-slate-800 rounded-2xl">
               <Calendar className="w-12 h-12 lg:w-16 lg:h-16 text-slate-600 mx-auto mb-3" />
-              <p className="text-slate-400 lg:text-lg">No events found</p>
+              <p className="text-slate-400 lg:text-lg">
+                {searchQuery ? "No events match your search" : "No events found"}
+              </p>
             </div>
           ) : (
             <div className="space-y-3">
-              {events.map((event) => {
+              {sortedEvents.map((event) => {
                 const eventParticipants = participants[event.$id] || [];
                 const isExpanded = expandedEvent === event.$id;
                 const isLoadingThis = loadingParticipants === event.$id;
