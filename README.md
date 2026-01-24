@@ -3,7 +3,6 @@
 Event coordinator dashboard for managing event registrations, attendance tracking, and winner declarations.
 
 ## Features
-
 ### 🎟️ Ticket Scanning
 - Manual ticket ID entry
 - QR code scanning via device camera
