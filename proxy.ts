@@ -3,28 +3,63 @@ import type { NextRequest } from 'next/server';
 
 export function proxy(request: NextRequest) {
     const coordSession = request.cookies.get('coord_session');
+    const coordType = request.cookies.get('coord_type');
     const path = request.nextUrl.pathname;
 
     // Redirect root to login
     if (path === '/') {
         if (coordSession) {
+            // Redirect based on coordinator type
+            if (coordType?.value === 'main') {
+                return NextResponse.redirect(new URL('/coordinator/overview', request.url));
+            }
             return NextResponse.redirect(new URL('/coordinator', request.url));
         }
         return NextResponse.redirect(new URL('/coordinator/login', request.url));
     }
 
-    // Protect coordinator routes (except login)
-    if (path.startsWith('/coordinator') && path !== '/coordinator/login') {
+    // Protect coordinator routes (except login pages)
+    if (path.startsWith('/coordinator') && path !== '/coordinator/login' && path !== '/coordinator/main-login') {
         if (!coordSession) {
             const response = NextResponse.redirect(new URL('/coordinator/login', request.url));
             response.cookies.delete('coord_session');
             response.cookies.delete('coord_event');
+            response.cookies.delete('coord_type');
             return response;
         }
     }
 
-    // Redirect to coordinator dashboard if already logged in and visiting coordinator login
+    // Main coordinator can only access overview
+    if (coordType?.value === 'main' && path === '/coordinator' && coordSession) {
+        return NextResponse.redirect(new URL('/coordinator/overview', request.url));
+    }
+
+    // Event coordinator cannot access overview
+    if (coordType?.value !== 'main' && path === '/coordinator/overview' && coordSession) {
+        return NextResponse.redirect(new URL('/coordinator', request.url));
+    }
+
+    // Redirect to overview if accessing coordinator root with session
+    if (path === '/coordinator' && coordSession) {
+        const coordEvent = request.cookies.get('coord_event');
+        // If they have an event assigned, stay on event dashboard, else go to overview
+        if (!coordEvent?.value && coordType?.value !== 'main') {
+            return NextResponse.redirect(new URL('/coordinator/overview', request.url));
+        }
+    }
+
+    // Redirect to appropriate dashboard if already logged in and visiting login pages
     if (path === '/coordinator/login' && coordSession) {
+        if (coordType?.value === 'main') {
+            return NextResponse.redirect(new URL('/coordinator/overview', request.url));
+        }
+        return NextResponse.redirect(new URL('/coordinator', request.url));
+    }
+
+    if (path === '/coordinator/main-login' && coordSession) {
+        if (coordType?.value === 'main') {
+            return NextResponse.redirect(new URL('/coordinator/overview', request.url));
+        }
         return NextResponse.redirect(new URL('/coordinator', request.url));
     }
 

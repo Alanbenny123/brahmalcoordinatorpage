@@ -1,12 +1,7 @@
 import { NextResponse } from "next/server";
-import { getBackendDB } from "@/lib/appwrite/backend";
-import { Query } from "node-appwrite";
 import { verifyPassword } from "@/lib/hash";
 import { checkRateLimit, clearRateLimit, getResetTime } from "@/lib/rate-limiter";
 import crypto from "crypto";
-
-const DB_ID = process.env.APPWRITE_DATABASE_ID!;
-const EVENTS_COLLECTION = process.env.APPWRITE_EVENTS_COLLECTION_ID!;
 
 export async function POST(req: Request) {
   try {
@@ -35,6 +30,7 @@ export async function POST(req: Request) {
     const origin = req.headers.get("origin");
     const host = req.headers.get("host");
     
+    // Allow requests from same origin or localhost in development
     const allowedOrigins = [
       `https://${host}`,
       `http://${host}`,
@@ -50,54 +46,50 @@ export async function POST(req: Request) {
       );
     }
 
-    // Check env vars
-    if (!DB_ID || !EVENTS_COLLECTION) {
-      return NextResponse.json(
-        { success: false, error: "Server configuration error" },
-        { status: 500 }
-      );
-    }
-
     const body = await req.json();
-    const { event_id, event_pass } = body;
+    const { coordinator_id, coordinator_pass } = body;
 
     // 4. Input validation
-    if (!event_id?.trim() || !event_pass?.trim()) {
+    if (!coordinator_id?.trim() || !coordinator_pass?.trim()) {
       return NextResponse.json(
         { success: false, message: "Invalid credentials" },
         { status: 401 }
       );
     }
 
-    // Find event by Appwrite document ID
-    let event;
-    try {
-      event = await getBackendDB().getDocument(
-        DB_ID,
-        EVENTS_COLLECTION,
-        event_id
-      );
-    } catch (error) {
-      // Don't reveal whether event exists (security best practice)
+    // Get credentials from environment variables OR use hardcoded values
+    const MAIN_COORDINATOR_ID = process.env.MAIN_COORDINATOR_ID || "admin";
+    
+    // Bcrypt hash of password: $Fgff7#bd32
+    // To generate a new hash, run: node -e "console.log(require('bcryptjs').hashSync('YourNewPassword', 10))"
+    const MAIN_COORDINATOR_PASS = process.env.MAIN_COORDINATOR_PASS || "$2b$10$lPH9Vdi8MUeMLNktgJuR8exQJoV/fz.r5hzXP/q4fsMVx2U.AmF2m";
+    // Current password: $Fgff7#bd32
+
+    // 5. Verify credentials (constant-time comparison)
+    const idMatch = coordinator_id === MAIN_COORDINATOR_ID;
+    
+    // Check if password is hashed (starts with $2a$ or $2b$ for bcrypt)
+    let passwordValid = false;
+    if (MAIN_COORDINATOR_PASS.startsWith('$2')) {
+      // Hashed password - bcrypt.compare is already constant-time
+      passwordValid = await verifyPassword(MAIN_COORDINATOR_PASS, coordinator_pass);
+    } else {
+      // Plain text password (for development only)
+      passwordValid = coordinator_pass === MAIN_COORDINATOR_PASS;
+    }
+
+    // 6. Don't specify which field is wrong (security best practice)
+    if (!idMatch || !passwordValid) {
       return NextResponse.json(
         { success: false, message: "Invalid credentials" },
         { status: 401 }
       );
     }
 
-    // Verify hashed password
-    const valid = await verifyPassword(event.event_pass, event_pass);
-    if (!valid) {
-      return NextResponse.json(
-        { success: false, message: "Invalid credentials" },
-        { status: 401 }
-      );
-    }
-
-    // 5. Clear rate limit on successful login
+    // 7. Clear rate limit on successful login
     clearRateLimit(ip);
 
-    // 6. Generate secure session token
+    // 8. Generate secure session token
     const token = crypto.randomUUID();
     const expiresAt = Date.now() + (7 * 24 * 60 * 60 * 1000); // 7 days
 
@@ -105,23 +97,25 @@ export async function POST(req: Request) {
       success: true,
       expiresAt,
       coordinator: {
-        id: event.$id,
-        event_name: event.event_name,
+        id: "main",
+        type: "main",
+        name: "Main Coordinator",
       },
     });
 
-    // 7. Set secure httpOnly cookies for session
+    // 9. Set secure httpOnly cookies (no coord_event for main coordinator)
     const isProduction = process.env.NODE_ENV === 'production';
     
     response.cookies.set('coord_session', token, {
       httpOnly: true,
       sameSite: 'strict', // Changed to 'strict' for better CSRF protection
-      secure: isProduction,
+      secure: isProduction, // Only send over HTTPS in production
       path: '/',
       maxAge: 60 * 60 * 24 * 7, // 7 days
     });
 
-    response.cookies.set('coord_event', event.$id, {
+    // Set a flag to indicate this is a main coordinator
+    response.cookies.set('coord_type', 'main', {
       httpOnly: true,
       sameSite: 'strict',
       secure: isProduction,
@@ -131,11 +125,10 @@ export async function POST(req: Request) {
 
     return response;
   } catch (err: any) {
-    console.error("Coordinator login error:", err);
+    console.error("Main coordinator login error:", err);
     return NextResponse.json(
       { success: false, error: err.message },
       { status: 500 }
     );
   }
 }
-
