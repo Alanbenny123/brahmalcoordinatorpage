@@ -129,6 +129,14 @@ export async function POST(req: Request) {
       maxAge: 60 * 60 * 24 * 7, // 7 days
     });
 
+    response.cookies.set('coord_type', 'event', {
+      httpOnly: true,
+      sameSite: 'strict',
+      secure: isProduction,
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+    });
+
     return response;
   } catch (err: any) {
     console.error("Coordinator login error:", err);
