@@ -286,10 +286,9 @@ export default function CoordinatorOverview() {
                 className="w-full pl-10 pr-4 py-3 bg-slate-950/50 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-amber-500 transition-colors appearance-none cursor-pointer"
               >
                 <option value="all">All Categories</option>
-                <option value="ashwamedha">Ashwamedha</option>
-                <option value="brahma (general)">Brahma (General)</option>
-                <option value="brahma (technical)">Brahma (Technical)</option>
-                <option value="brahma (cultural)">Brahma (Cultural)</option>
+                <option value="technical">Technical</option>
+                <option value="general">General</option>
+                <option value="cultural">Cultural</option>
               </select>
             </div>
 
